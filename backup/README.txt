@@ -1,0 +1,8 @@
+-- Снимок рабочей базы «Обещание против реальности».
+-- Сделано: pg_dump -Fc -f db_obeshchanie.dump
+-- Восстановление:
+--   pg_restore -U oapv_app -h localhost -d obeshchanie --clean --if-exists db_obeshchanie.dump
+--
+-- Также рядом лежит db_obeshchanie.sql — обычный SQL-дамп для восстановления
+-- через psql:
+--   psql -U oapv_app -h localhost -d obeshchanie -f db_obeshchanie.sql
