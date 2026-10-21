@@ -40,6 +40,8 @@ const finding: Finding = {
   rule_version: 'rules-2024.1',
   origin: 'rules',
   archived: false,
+  explanation: '',
+  explanation_provider: '',
   created_at: '2026-01-01T10:00:00Z',
   updated_at: '2026-01-01T10:00:00Z',
 }
@@ -105,5 +107,27 @@ describe('Карточка результата проверки', () => {
     expect(text).not.toContain('мошенник')
     expect(text).not.toContain('недобросовестн')
     expect(text).not.toContain('подделк')
+  })
+
+  it('показывает пояснение модели отдельным блоком, не меняя вывод', () => {
+    const withExplanation: Finding = {
+      ...finding,
+      explanation: 'Обещание и спецификация описывают разные сценарии работы.',
+      explanation_provider: 'openrouter',
+    }
+
+    render(
+      <MemoryRouter>
+        <FindingCard finding={withExplanation} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Комментарий модели (openrouter)')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Обещание и спецификация описывают разные сценарии/),
+    ).toBeInTheDocument()
+    // Тип и серьёзность остаются прежними: их определяют правила.
+    expect(screen.getByText('Прямое расхождение')).toBeInTheDocument()
+    expect(screen.getByText('Средняя')).toBeInTheDocument()
   })
 })

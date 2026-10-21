@@ -1109,6 +1109,16 @@ table.data tbody tr.is-clickable {
   color: var(--teal-700);
 }
 
+.callout-model {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft-2);
+  color: var(--accent-700);
+}
+
+.callout-model strong {
+  color: var(--accent-700);
+}
+
 .finding-footer {
   display: flex;
   flex-wrap: wrap;

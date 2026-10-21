@@ -11,7 +11,7 @@ import {
   STATUS_BADGE,
   STATUS_LABELS,
 } from './labels'
-import { IconCheck, IconFile, IconInfo, IconQuote, IconScale } from './icons'
+import { IconCheck, IconFile, IconInfo, IconQuote, IconScale, IconSpark } from './icons'
 
 interface FindingCardProps {
   finding: Finding
@@ -143,6 +143,26 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
                 <div>
                   <strong>Ограничение вывода</strong>
                   {finding.limitations}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {finding.explanation && (
+            <div className="finding-section">
+              <div className="callout callout-model">
+                <span className="callout-icon" aria-hidden="true">
+                  <IconSpark size={16} />
+                </span>
+                <div>
+                  <strong>
+                    Комментарий модели{finding.explanation_provider ? ` (${finding.explanation_provider})` : ''}
+                  </strong>
+                  {finding.explanation}
+                  <div className="evidence-note">
+                    Пояснение дополняет находку, но не меняет её тип и серьёзность: их
+                    определяют детерминированные правила.
+                  </div>
                 </div>
               </div>
             </div>

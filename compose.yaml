@@ -52,10 +52,10 @@ services:
   migrate:
     build:
       context: ./app
-      dockerfile: backend/Containerfile
     image: obeshchanie/backend:local
     container_name: obeshchanie-migrate
-    command: ["alembic", "upgrade", "head"]
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["wait-for-db.sh 60 2 && alembic upgrade head"]
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oapv}:${POSTGRES_PASSWORD:-oapv_container_local}@db:5432/${POSTGRES_DB:-obeshchanie}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
@@ -72,7 +72,6 @@ services:
   backend:
     build:
       context: ./app
-      dockerfile: backend/Containerfile
     image: obeshchanie/backend:local
     container_name: obeshchanie-backend
     restart: unless-stopped
@@ -95,6 +94,18 @@ services:
       LLM_BASE_URL: ${LLM_BASE_URL:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-90}
+      # OpenRouter: бесплатные модели. Ключ приходит из окружения хоста
+      # и не попадает в образ.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      OPENROUTER_TIMEOUT_SECONDS: ${OPENROUTER_TIMEOUT_SECONDS:-60}
+      OPENROUTER_MAX_RETRIES: ${OPENROUTER_MAX_RETRIES:-2}
+      OPENROUTER_RETRY_BACKOFF_SECONDS: ${OPENROUTER_RETRY_BACKOFF_SECONDS:-2}
+      OPENROUTER_MAX_TOKENS: ${OPENROUTER_MAX_TOKENS:-1500}
+      OPENROUTER_FALLBACK_MODELS: ${OPENROUTER_FALLBACK_MODELS:-}
+      OPENROUTER_HTTP_REFERER: ${OPENROUTER_HTTP_REFERER:-}
+      OPENROUTER_APP_TITLE: ${OPENROUTER_APP_TITLE:-Обещание против реальности}
       # Браузер заходит через frontend (nginx) на порту 8080 — тот же origin
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
       TOKEN_TTL_HOURS: ${TOKEN_TTL_HOURS:-336}
@@ -127,8 +138,7 @@ services:
   # Собранный Vite-бандл раздаёт nginx, /api проксируется на backend.
   frontend:
     build:
-      context: ./app
-      dockerfile: frontend/Containerfile
+      context: ./app/frontend
     image: obeshchanie/frontend:local
     container_name: obeshchanie-frontend
     restart: unless-stopped

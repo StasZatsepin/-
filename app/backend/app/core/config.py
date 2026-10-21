@@ -6,7 +6,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, List
 
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # app/backend/app/core/config.py -> app/backend/app/core -> ... -> корень проекта
@@ -68,12 +68,31 @@ class Settings(BaseSettings):
 
     # Провайдер ИИ. По умолчанию mock: приложение полностью работоспособно
     # без внешних API и без платных ключей.
-    llm_provider: str = "mock"  # mock | ollama | openai_compatible
+    llm_provider: str = "mock"  # mock | ollama | openai_compatible | openrouter
     llm_model: str = ""
     llm_base_url: str = ""
-    llm_api_key: str = ""
+    llm_api_key: SecretStr = SecretStr("")
     llm_timeout_seconds: float = 90.0
     llm_max_chars: int = 12000
+
+    # --- OpenRouter: бесплатные модели с открытым API ---
+    # Ключ хранится как SecretStr: случайная печать или сериализация
+    # настроек не покажут его содержимое.
+    openrouter_api_key: SecretStr = SecretStr("")
+    # Идентификатор модели задаётся конфигурацией: бизнес-логика не знает
+    # ни о какой конкретной модели и о том, какие из них бесплатны.
+    openrouter_model: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_timeout_seconds: float = 60.0
+    openrouter_max_retries: int = 2
+    openrouter_retry_backoff_seconds: float = 2.0
+    openrouter_max_tokens: int = 1500
+    # Резервные модели: используются только при 429 и только из этого списка.
+    openrouter_fallback_models: Annotated[List[str], NoDecode] = []
+    # HTTP-Referer и X-Title: OpenRouter рекомендует их для атрибуции
+    # запросов в личном кабинете. Не являются секретами.
+    openrouter_http_referer: str = ""
+    openrouter_app_title: str = "Обещание против реальности"
 
     cors_origins: Annotated[List[str], NoDecode] = [
         "http://localhost:5173",
@@ -94,7 +113,7 @@ class Settings(BaseSettings):
             return [item if item.startswith(".") else f".{item}" for item in items]
         return value
 
-    @field_validator("allowed_upload_mimetypes", "cors_origins", mode="before")
+    @field_validator("allowed_upload_mimetypes", "cors_origins", "openrouter_fallback_models", mode="before")
     @classmethod
     def _split_csv(cls, value):
         if isinstance(value, str):
@@ -118,3 +137,17 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def secret_value(value: object) -> str:
+    """Безопасно получает значение секрета.
+
+    Принимает как `SecretStr`, так и обычную строку: значение может быть
+    подставлено программно (тесты, скрипты) в обход настроек.
+    """
+    if value is None:
+        return ""
+    getter = getattr(value, "get_secret_value", None)
+    if callable(getter):
+        return str(getter() or "")
+    return str(value)

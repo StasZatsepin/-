@@ -13,12 +13,11 @@ from typing import Dict, List
 import httpx
 
 from app.core.config import settings
-from app.models.enums import ClaimType, FindingType, Severity
+from app.models.enums import ClaimType, ConfidenceStatus
 from app.providers.base import (
     ClaimAnalysisProvider,
     ClaimCandidate,
     ClaimSuggestion,
-    FindingSuggestion,
     ProviderResult,
     ProviderStatus,
 )
@@ -46,7 +45,9 @@ class OllamaProvider(ClaimAnalysisProvider):
     requires_api_key = False
 
     def __init__(self, base_url: str | None = None, model: str | None = None) -> None:
-        self.base_url = (base_url or settings.llm_base_url or "http://127.0.0.1:11434").rstrip("/")
+        self.base_url = (
+            base_url or settings.llm_base_url or "http://127.0.0.1:11434"
+        ).rstrip("/")
         self.model = model or settings.llm_model or DEFAULT_MODEL
 
     # --- служебное -----------------------------------------------------------
@@ -108,11 +109,14 @@ class OllamaProvider(ClaimAnalysisProvider):
             claim_type = item.get("claim_type")
             if not claim_id or claim_type not in {ct.value for ct in ClaimType}:
                 continue
+            confidence = str(item.get("confidence_label") or "")
+            if confidence not in {item.value for item in ConfidenceStatus}:
+                confidence = ConfidenceStatus.NEEDS_REVIEW.value
             suggestions.append(
                 ClaimSuggestion(
                     claim_id=claim_id,
                     claim_type=claim_type,
-                    confidence_label=str(item.get("confidence_label") or "needs_human_review"),
+                    confidence_label=confidence,
                     rationale=str(item.get("rationale") or "")[:1000],
                     provider=self.name,
                     model_version=self.model,

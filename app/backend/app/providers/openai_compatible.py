@@ -11,9 +11,7 @@ import json
 import logging
 from typing import Dict, List
 
-import httpx
-
-from app.core.config import settings
+from app.core.config import secret_value, settings
 from app.models.enums import ClaimType, ConfidenceStatus
 from app.providers.base import (
     ClaimAnalysisProvider,
@@ -22,6 +20,7 @@ from app.providers.base import (
     ProviderResult,
     ProviderStatus,
 )
+from app.providers.openai_client import OpenAICompatibleClient, ProviderHTTPError
 
 logger = logging.getLogger("app.providers.openai")
 
@@ -49,11 +48,23 @@ class OpenAICompatibleProvider(ClaimAnalysisProvider):
         model: str | None = None,
     ) -> None:
         self.base_url = (base_url or settings.llm_base_url or "").rstrip("/")
-        self.api_key = api_key if api_key is not None else settings.llm_api_key
+        self.api_key = (
+            api_key if api_key is not None else secret_value(settings.llm_api_key)
+        )
         self.model = model or settings.llm_model or ""
 
     def _configured(self) -> bool:
         return bool(self.base_url and self.api_key and self.model)
+
+    def _client(self) -> OpenAICompatibleClient:
+        return OpenAICompatibleClient(
+            base_url=self.base_url,
+            api_key=self.api_key,
+            model=self.model,
+            timeout=settings.llm_timeout_seconds,
+            max_retries=settings.openrouter_max_retries,
+            backoff=settings.openrouter_retry_backoff_seconds,
+        )
 
     def _build_prompt(self, claims: List[ClaimCandidate], context: Dict[str, str]) -> str:
         payload = [
@@ -149,35 +160,21 @@ class OpenAICompatibleProvider(ClaimAnalysisProvider):
             )
 
         try:
-            response = httpx.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "temperature": 0,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": self._build_prompt(claims, context)},
-                    ],
-                },
-                timeout=settings.llm_timeout_seconds,
+            # json_mode выключен: не все OpenAI-совместимые сервисы понимают
+            # response_format, а прежнее поведение провайдера не меняем.
+            result = self._client().chat(
+                SYSTEM_PROMPT, self._build_prompt(claims, context), json_mode=False
             )
-            response.raise_for_status()
-            content = response.json()["choices"][0]["message"]["content"]
-        except Exception as exc:
-            logger.warning("Внешний ИИ-провайдер недоступен: %s", type(exc).__name__)
+        except ProviderHTTPError as exc:
+            logger.warning("Внешний ИИ-провайдер недоступен: %s", exc.kind)
             return ProviderResult(
                 provider=self.name,
                 model_version=self.model,
                 status="unavailable",
-                message=f"Внешний ИИ-провайдер недоступен ({type(exc).__name__}). "
-                "Детерминированные проверки продолжают работать.",
+                message=f"Внешний ИИ-провайдер недоступен. {exc.user_message()}",
             )
 
-        suggestions = self._parse_response(content)
+        suggestions = self._parse_response(result.content)
         return ProviderResult(
             provider=self.name,
             model_version=self.model,

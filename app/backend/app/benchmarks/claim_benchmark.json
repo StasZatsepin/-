@@ -1,0 +1,127 @@
+{
+  "version": "2024.1",
+  "description": "Фиксированный набор утверждений для сравнения провайдеров анализа. Ожидаемые типы и статусы заданы вручную и не меняются от провайдера к провайдеру.",
+  "note": "Тексты синтетические. Источник — карточка демонстрационного товара.",
+  "claims": [
+    {
+      "id": "b-01",
+      "text": "До 48 часов работы без подзарядки.",
+      "expected_type": "numeric_performance",
+      "expected_confidence": "conflicting_sources"
+    },
+    {
+      "id": "b-02",
+      "text": "Вес наушников 250 граммов.",
+      "expected_type": "dimension_or_weight",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-03",
+      "text": "Подходит для iPhone 15, Samsung Galaxy и любых устройств с Bluetooth 5.3.",
+      "expected_type": "compatibility",
+      "expected_confidence": "insufficient_evidence"
+    },
+    {
+      "id": "b-04",
+      "text": "Полностью безопасен для детей и подростков.",
+      "expected_type": "safety_or_health",
+      "expected_confidence": "needs_human_review"
+    },
+    {
+      "id": "b-05",
+      "text": "Сертификат соответствия ГОСТ Р и декларация ТР ТС приложены к карточке.",
+      "expected_type": "certification_or_compliance",
+      "expected_confidence": "insufficient_evidence"
+    },
+    {
+      "id": "b-06",
+      "text": "Гарантия 24 месяца, сервисная поддержка отвечает в течение 1 часа.",
+      "expected_type": "warranty_or_service",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-07",
+      "text": "Лёгкий и удобный: идеально подходит для ежедневных поездок и тренировок.",
+      "expected_type": "subjective_marketing",
+      "expected_confidence": "subjective_or_not_testable"
+    },
+    {
+      "id": "b-08",
+      "text": "Кейс выполнен из ударопрочного пластика.",
+      "expected_type": "material_or_composition",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-09",
+      "text": "Ёмкость аккумулятора — 3000 мАч.",
+      "expected_type": "numeric_performance",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-10",
+      "text": "Версия радиомодуля — Bluetooth 5.3.",
+      "expected_type": "compatibility",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-11",
+      "text": "Подходит всем и полностью безопасен.",
+      "expected_type": "subjective_marketing",
+      "expected_confidence": "subjective_or_not_testable"
+    },
+    {
+      "id": "b-12",
+      "text": "Масса одного наушника — 250 граммов.",
+      "expected_type": "dimension_or_weight",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-13",
+      "text": "Гарантийный срок — 12 месяцев, сервисная поддержка работает круглосуточно.",
+      "expected_type": "warranty_or_service",
+      "expected_confidence": "insufficient_evidence"
+    },
+    {
+      "id": "b-14",
+      "text": "Наушники работают на Bluetooth 5.3 и поддерживают кодек AAC.",
+      "expected_type": "compatibility",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-15",
+      "text": "Профессиональное качество звука для любых жанров.",
+      "expected_type": "subjective_marketing",
+      "expected_confidence": "subjective_or_not_testable"
+    },
+    {
+      "id": "b-16",
+      "text": "Время работы без подзарядки — 30 часов.",
+      "expected_type": "numeric_performance",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-17",
+      "text": "Декларация ТР ТС и паспорт изделия приложены к карточке.",
+      "expected_type": "certification_or_compliance",
+      "expected_confidence": "insufficient_evidence"
+    },
+    {
+      "id": "b-18",
+      "text": "Материал амбушюр — силикон.",
+      "expected_type": "material_or_composition",
+      "expected_confidence": "supported_by_provided_source"
+    },
+    {
+      "id": "b-19",
+      "text": "Никаких побочных эффектов и абсолютно безопасен для чувствительной кожи.",
+      "expected_type": "safety_or_health",
+      "expected_confidence": "needs_human_review"
+    },
+    {
+      "id": "b-20",
+      "text": "Мощность — 300 ватт.",
+      "expected_type": "numeric_performance",
+      "expected_confidence": "supported_by_provided_source"
+    }
+  ]
+}

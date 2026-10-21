@@ -123,6 +123,10 @@ class FindingDraft:
     rule_id: str = ""
     rule_version: str = RULES_VERSION
     origin: str = "rules"
+    # Пояснение внешней модели: не меняет тип и серьёзность находки,
+    # а только дополняет её формулировкой.
+    explanation: str = ""
+    explanation_provider: str = ""
 
 
 @dataclass

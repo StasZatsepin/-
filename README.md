@@ -1,4 +1,4 @@
-# «Обещание против реальности»
+﻿# «Обещание против реальности»
 
 Веб-приложение для продавцов маркетплейсов: оно сопоставляет заявления в карточке
 товара, структурированные характеристики, загруженные документы и отзывы покупателей,
@@ -26,7 +26,7 @@
 | Статусы рассмотрения и история действий | ✅ |
 | HTML-отчёт с дисклеймером и ссылками на источники | ✅ |
 | Демонстрационный набор синтетических данных | ✅ |
-| Провайдер ИИ: `mock` (по умолчанию), `ollama`, `openai_compatible` | ✅ |
+| Провайдер ИИ: `mock` (по умолчанию), `openrouter`, `ollama`, `openai_compatible` | ✅ |
 | Тесты backend (77) и frontend (20) | ✅ |
 | OCR, PDF-экспорт отчёта, импорт по URL | ❌ не входит в MVP |
 
@@ -301,8 +301,43 @@ LLM_API_KEY=...
 | `MAX_UPLOAD_BYTES` | `10485760` | лимит размера файла |
 | `ALLOWED_UPLOAD_EXTENSIONS` | `.txt,.csv,.md,.pdf,.xlsx` | разрешённые форматы |
 | `DEMO_MODE` | `true` | вход в демонстрационное пространство |
-| `LLM_PROVIDER` | `mock` | `mock` / `ollama` / `openai_compatible` |
+| `LLM_PROVIDER` | `mock` | `mock` / `openrouter` / `ollama` / `openai_compatible` |
 | `CORS_ORIGINS` | `http://localhost:5173,...` | источники frontend |
+
+---
+
+## 9a. ИИ-провайдеры
+
+По умолчанию `LLM_PROVIDER=mock`: локальная эвристика без сети. Приложение
+полностью работоспособно без ключей API.
+
+| `LLM_PROVIDER` | Что это | Ключ | Данные уходят наружу |
+|---|---|---|---|
+| `mock` | локальная эвристика (по умолчанию) | нет | нет |
+| `openrouter` | бесплатные модели OpenRouter | `OPENROUTER_API_KEY` | да |
+| `ollama` | локальные модели с открытыми весами | нет | нет |
+| `openai_compatible` | любой OpenAI-совместимый API | `LLM_API_KEY` | да |
+
+Подключение бесплатных моделей OpenRouter — пошаговая инструкция в
+[docs/AI_PROVIDERS.md](docs/AI_PROVIDERS.md). Кратко:
+
+`env
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-ваш-ключ
+OPENROUTER_MODEL=minimax/minimax-m3.1-flash:free
+`
+
+Проверить актуальный список бесплатных моделей и сравнить провайдеров:
+
+`powershell
+.\.venv\Scripts\python.exe scripts\check_openrouter_models.py --all
+.\.venv\Scripts\python.exe scripts\compare_providers.py
+`
+
+Модель выбирается конфигурацией: идентификатор в коде не зашит. Числовые
+проверки, единицы измерения, даты и совпадение моделей всегда выполняют
+детерминированные правила; модель дополняет их формулировками и пояснениями и
+не может объявить факт доказанным без фрагмента источника.
 
 ---
 
@@ -321,6 +356,7 @@ LLM_API_KEY=...
 | [09_IMPLEMENTATION_PLAN.md](09_IMPLEMENTATION_PLAN.md) | этапы разработки |
 | [10_AI_DEVELOPER_RULES.md](10_AI_DEVELOPER_RULES.md) | правила работы для ИИ-разработчика |
 | [11_MASTER_PROMPT.md](11_MASTER_PROMPT.md) | стартовый запрос |
+| [docs/AI_PROVIDERS.md](docs/AI_PROVIDERS.md) | ИИ-провайдеры: OpenRouter, Ollama, режимы, сравнение |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | принятые архитектурные решения и отклонения |
 | [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) | состояние реализации |
 

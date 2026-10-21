@@ -31,6 +31,14 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
+# Compose-провайдер: podman-compose из venv проекта не требует Docker API
+# в именованном канале и работает одинаково на любой машине.
+$venvScripts = Join-Path $root '.venv\Scripts'
+if (Test-Path (Join-Path $venvScripts 'podman-compose.exe')) {
+    $env:PATH = "$venvScripts;$env:PATH"
+    $env:PODMAN_COMPOSE_PROVIDER = 'podman-compose'
+}
+
 function Invoke-Compose {
     & podman compose @args
 }

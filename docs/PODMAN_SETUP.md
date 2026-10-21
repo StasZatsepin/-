@@ -1,4 +1,4 @@
-# Запуск через Podman (Linux-контейнеры на Windows)
+﻿# Запуск через Podman (Linux-контейнеры на Windows)
 
 Документ описывает контейнерный запуск проекта «Обещание против реальности»
 на Windows через **Podman** и совместимый Compose-провайдер. Docker Desktop не
@@ -33,8 +33,8 @@
 | Компонент | Версия | Проверено |
 |---|---|---|
 | Podman | 4+ | 6.1.4 (Windows, WSL2-машина) |
-| Podman Machine | 4 CPU / 2 ГБ RAM / 100 ГБ диск | `podman-machine-default` |
-| Compose-провайдер | любой совместимый | Docker Compose v5.6.1 как внешний провайдер `podman compose` |
+| Compose-провайдер | любой совместимый | `podman-compose` 1.6.0 (в venv проекта) |
+| Docker Compose | опционально | v5.6.1 — требует именованного канала `\\.\pipe\podman-machine-default` |
 
 Проверка окружения:
 
@@ -44,7 +44,37 @@ podman machine list
 podman compose version
 ```
 
-Если машина не создана:
+### Compose-провайдер
+
+На Windows команда `podman compose` подключает внешний провайдер. В проекте
+используется **podman-compose**: он обращается к CLI Podman напрямую и не
+требует Docker API в именованном канале, поэтому работает одинаково на любой
+машине и после перезагрузки WSL.
+
+```powershell
+# Установлен в виртуальное окружение проекта, не глобально
+.\.venv\Scripts\python.exe -m pip install podman-compose
+```
+
+Скрипт `scripts/podman.ps1` сам подставляет провайдер в `PATH` и
+`PODMAN_COMPOSE_PROVIDER`. Для прямых вызовов сделайте то же самое:
+
+```powershell
+$env:PATH = "D:\Control\Проект конкурса\.venv\Scripts;$env:PATH"
+$env:PODMAN_COMPOSE_PROVIDER = 'podman-compose'
+podman compose up -d --build
+```
+
+Альтернатива — Docker Compose (`docker-compose.exe`), который был до этого
+использован в проекте. Он работает, если Podman создаёт именованный канал
+`\\.\pipe\podman-machine-default`; при его отсутствии выдаётся понятная ошибка
+`failed to connect to the docker API at npipe:////./pipe/podman-machine-default`.
+
+> `compose.yaml` не содержит полей, специфичных для одного провайдера:
+> `Containerfile` лежит в корне контекста сборки каждого сервиса, поэтому
+> файл понимают и `podman-compose`, и `docker-compose`.
+
+Если машина Podman ещё не создана:
 
 ```powershell
 podman machine init --cpus 4 --memory 4096 --disk-size 60
@@ -67,9 +97,19 @@ cd "D:\Control\Проект конкурса"
 podman compose up -d --build     # сборка образов и запуск стека
 podman compose ps               # состояние контейнеров
 podman compose logs -f          # логи
+podman compose down             # остановка (тома с данными сохраняются)
 ```
 
-Через вспомогательный скрипт:
+Если в вашей системе `podman compose` подключает Docker Compose и тот не может
+достучаться до Docker API, подключите podman-compose (см. раздел 2):
+
+```powershell
+$env:PATH = "D:\Control\Проект конкурса\.venv\Scripts;$env:PATH"
+$env:PODMAN_COMPOSE_PROVIDER = 'podman-compose'
+podman compose up -d --build
+```
+
+Через вспомогательный скрипт (он подставляет провайдер сам):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\podman.ps1 up
@@ -127,6 +167,10 @@ podman exec obeshchanie-backend python -c "import urllib.request; print(urllib.r
 Контейнер работает от непривилегированного пользователя `appuser` (uid 10001).
 Проверка готовности выполняется штатной библиотекой Python — в образе нет
 `curl`.
+
+Точка входа ждёт готовности базы (`wait-for-db.sh`, до 60 попыток с паузой
+2 с) и только затем запускает uvicorn. Это делает запуск независимым от того,
+умеет ли compose-провайдер ждать `healthcheck` зависимости.
 
 ### Frontend
 
@@ -216,7 +260,7 @@ podman exec `
 Тесты frontend — отдельный этап образа:
 
 ```powershell
-podman build --target test -f app/frontend/Containerfile -t obeshchanie/frontend-test:local app
+podman build --target test -f app/frontend/Containerfile -t obeshchanie/frontend-test:local app/frontend
 ```
 
 Или одной командой:

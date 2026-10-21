@@ -76,6 +76,42 @@ class ProviderStatus:
     fallback_provider: str = "mock"
 
 
+@dataclass
+class ExtractedClaim:
+    """Утверждение, извлечённое моделью из текста источника.
+
+    `source_excerpt` обязателен: без дословного фрагмента источника
+    утверждение не сохраняется.
+    """
+
+    text: str
+    claim_type: str
+    source_excerpt: str
+    confidence_label: str = "needs_human_review"
+    rationale: str = ""
+
+
+@dataclass
+class FindingContext:
+    """Контекст находки, передаваемый модели для объяснения."""
+
+    rule_id: str
+    title: str
+    description: str
+    evidence_excerpts: List[str] = field(default_factory=list)
+    limitations: str = ""
+    key: str = ""
+
+
+@dataclass
+class ExplanationSuggestion:
+    """Пояснение модели к находке (не меняет тип и серьёзность)."""
+
+    rule_id: str
+    explanation: str
+    quotes: List[str] = field(default_factory=list)
+
+
 class ClaimAnalysisProvider(abc.ABC):
     """Базовый интерфейс анализа утверждений."""
 
@@ -92,6 +128,26 @@ class ClaimAnalysisProvider(abc.ABC):
         self, claims: List[ClaimCandidate], context: Dict[str, str]
     ) -> ProviderResult:
         """Классифицирует утверждения и при необходимости предлагает находки."""
+
+    def extract_claims(
+        self, text: str, context: Dict[str, str]
+    ) -> List[ExtractedClaim]:
+        """Извлекает кандидаты в утверждения из текста источника.
+
+        Необязательный метод: провайдеры без внешней модели оставляют
+        извлечение утверждений детерминированному разбору.
+        """
+        return []
+
+    def explain_findings(
+        self, findings: List[FindingContext], context: Dict[str, str]
+    ) -> List[ExplanationSuggestion]:
+        """Формулирует пояснения к находкам.
+
+        Необязательный метод. Пояснение не меняет тип находки и её
+        серьёзность: они определяются детерминированными правилами.
+        """
+        return []
 
     def describe(self) -> str:  # pragma: no cover - текстовое описание
         return f"{self.name}"

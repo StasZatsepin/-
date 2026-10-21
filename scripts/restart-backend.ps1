@@ -9,13 +9,16 @@
 $ErrorActionPreference = 'SilentlyContinue'
 $root = Split-Path -Parent $PSScriptRoot
 
-$existing = Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" |
-    Where-Object { $_.CommandLine -like '*uvicorn*app.main:app*' }
+$existing = Get-CimInstance Win32_Process |
+    Where-Object {
+        $_.Name -like 'python*' -and
+        ($_.CommandLine -like '*uvicorn*app.main:app*' -or $_.CommandLine -like '*multiprocessing.spawn*')
+    }
 foreach ($process in $existing) {
     Write-Host "Останавливаю предыдущий backend (PID $($process.ProcessId))"
     Stop-Process -Id $process.ProcessId -Force
 }
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 3
 
 $ErrorActionPreference = 'Stop'
 $python = Join-Path $root '.venv\Scripts\python.exe'

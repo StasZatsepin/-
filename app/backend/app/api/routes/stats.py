@@ -125,6 +125,34 @@ def ai_settings(user: User = Depends(get_current_user)) -> dict:
             "external_data_transfer": status.external_data_transfer,
             "fallback": status.fallback_provider,
         },
+        # Список поддерживаемых провайдеров без ключей и сетевых проверок.
+        "available_providers": [
+            {
+                "name": "mock",
+                "label": "Локальная эвристика",
+                "requires_api_key": False,
+                "hint": "Работает без сети. Используется по умолчанию и как резервный режим.",
+            },
+            {
+                "name": "openrouter",
+                "label": "OpenRouter (бесплатные модели)",
+                "requires_api_key": True,
+                "hint": "Нужен OPENROUTER_API_KEY и OPENROUTER_MODEL. Текст материалов "
+                "передаётся внешнему сервису.",
+            },
+            {
+                "name": "ollama",
+                "label": "Ollama (локальные модели)",
+                "requires_api_key": False,
+                "hint": "Нужен запущенный сервис Ollama. Материалы не покидают компьютер.",
+            },
+            {
+                "name": "openai_compatible",
+                "label": "Другой OpenAI-совместимый API",
+                "requires_api_key": True,
+                "hint": "Нужны LLM_BASE_URL, LLM_API_KEY и LLM_MODEL.",
+            },
+        ],
         "limits": {
             "max_upload_bytes": settings.max_upload_bytes,
             "allowed_extensions": settings.allowed_upload_extensions,

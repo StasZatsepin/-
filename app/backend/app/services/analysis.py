@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
@@ -31,6 +32,8 @@ from app.rules.attributes import parse_attributes
 from app.rules.engine import (
     RULES_VERSION,
     ComparableClaim,
+    EvidenceRef,
+    FindingDraft,
     build_ambiguous_findings,
     build_document_scope_findings,
     build_internal_conflict_findings,
@@ -311,6 +314,8 @@ def _persist_findings(
             rule_id=draft.rule_id,
             rule_version=draft.rule_version,
             origin=draft.origin,
+            explanation=draft.explanation,
+            explanation_provider=draft.explanation_provider,
         )
         db.add(finding)
         findings.append(finding)
@@ -387,6 +392,14 @@ def run_analysis(
         )
         applied = _apply_provider_suggestions(claims, provider_result.claim_suggestions)
 
+        # --- дополнительные утверждения от модели ---
+        # Модель дополняет детерминированный разбор, но её утверждения
+        # принимаются только с дословным фрагментом источника.
+        extracted_by_provider = _extract_claims_with_provider(
+            db, product, provider, all_sources, claims, source_by_id
+        )
+        claims = list(claims) + extracted_by_provider
+
         comparables = _build_comparables(claims, all_sources)
         eligible_claim_ids = _eligible_claim_ids(
             claims, source_by_id, dict(product.attributes or {})
@@ -438,7 +451,21 @@ def run_analysis(
         )
 
         for suggestion in provider_result.finding_suggestions:
-            drafts.append(_finding_draft_from_provider(suggestion))
+            draft = _finding_draft_from_provider(suggestion, all_sources)
+            if draft is not None:
+                drafts.append(draft)
+
+        # --- пояснения модели к находкам ---
+        # Пояснение дополняет формулировку, но не меняет тип, серьёзность
+        # и статус находки: их определяют детерминированные правила.
+        explained = _explain_findings_with_provider(
+            provider, drafts, product, all_sources
+        )
+        for index, draft in enumerate(drafts):
+            explanation = explained.get(str(index))
+            if explanation:
+                draft.explanation = explanation.text
+                draft.explanation_provider = explanation.provider
 
         _archive_previous_findings(db, product.id)
         findings = _persist_findings(db, product, run, drafts, evidence_ids)
@@ -463,6 +490,11 @@ def run_analysis(
                 "Внешний ИИ-провайдер не использовался: анализ выполнен "
                 "детерминированными правилами."
             )
+        if extracted_by_provider:
+            limitations.append(
+                "Часть утверждений извлечена моделью и требует подтверждения "
+                "пользователем."
+            )
         if provider_result.message:
             limitations.append(provider_result.message)
 
@@ -473,12 +505,15 @@ def run_analysis(
             "product_name": product.name,
             "claims_total": len(claims),
             "claims_classified_by_provider": applied,
+            "claims_extracted_by_provider": len(extracted_by_provider),
             "sources_total": len(all_sources),
             "findings_total": len(findings),
             "findings_by_type": by_type,
             "findings_by_severity": by_severity,
+            "findings_explained_by_provider": len(explained),
             "provider": provider_result.provider,
             "provider_model": provider_result.model_version,
+            "provider_ok": provider_result.status in {"ok", "empty"},
             "external_service_used": used_external,
             "evidence_total": sum(len(value) for value in evidence_ids.values()),
         }
@@ -547,33 +582,189 @@ def _attribute_claim_map(claims: List[Claim], quantities) -> Dict[str, str]:
     return result
 
 
-def _finding_draft_from_provider(suggestion):
-    from app.rules.engine import EvidenceRef, FindingDraft
+def _finding_draft_from_provider(suggestion, sources):
+    """Создаёт находку из предложения модели.
+
+    Предложение принимается, только если модель процитировала фрагмент,
+    который дословно есть в одном из источников. Тип находки принудительно
+    меняется на `needs_human_review`: модель не вправе объявлять факт
+    доказанным.
+    """
+    from app.models.enums import FindingType, Severity
+
+    source_texts = [
+        (source.source_name, source.text_content or "") for source in sources
+    ]
+    excerpts = [excerpt for excerpt in (suggestion.excerpts or []) if excerpt.strip()]
+    verified = [
+        excerpt
+        for excerpt in excerpts
+        if any(excerpt in text for _, text in source_texts)
+    ]
+    if not verified:
+        logger.info(
+            "Предложение модели отклонено: нет дословного фрагмента источника"
+        )
+        return None
 
     return FindingDraft(
-        finding_type=suggestion.finding_type
-        if suggestion.finding_type in {item.value for item in FindingType}
-        else FindingType.NEEDS_HUMAN_REVIEW.value,
-        severity=suggestion.severity
-        if suggestion.severity in {"info", "low", "medium", "high"}
-        else "low",
+        finding_type=FindingType.NEEDS_HUMAN_REVIEW.value,
+        severity=Severity.LOW.value,
         title=suggestion.title[:250],
         description=suggestion.description,
         claim_id=suggestion.claim_id,
         evidence=[
             EvidenceRef(
                 source_id=None,
-                source_name="Предложение ИИ-провайдера",
+                source_name=source_name,
                 excerpt=excerpt,
                 relation="uncertain",
+                note="Фрагмент приведён моделью и подтверждён в исходном источнике.",
             )
-            for excerpt in (suggestion.excerpts or [])[:5]
-        ],
-        limitations=suggestion.limitations
-        or "Вывод предложен языковой моделью и требует проверки человеком.",
+            for source_name, text in source_texts
+            for excerpt in verified
+            if excerpt in text
+        ][:5],
+        limitations=(
+            "Вывод предложен языковой моделью и требует проверки человеком: "
+            "подтверждение факта требует сверки с первоисточником."
+        ),
         recommended_action=suggestion.recommended_action
-        or "Проверить вывод вручную по первоисточникам.",
+        or "Проверить вывод по первоисточникам.",
         confidence_status=ConfidenceStatus.NEEDS_REVIEW.value,
         rule_id="provider.suggestion",
         origin="llm",
     )
+
+
+def _normalize_claim_text(text: str) -> str:
+    """Нормализует текст для сравнения утверждений (без пунктуации и регистра)."""
+    lowered = (text or "").lower().replace("ё", "е")
+    return " ".join(
+        "".join(char if char.isalnum() or char.isspace() else " " for char in lowered).split()
+    )
+
+
+def _extract_claims_with_provider(
+    db: Session,
+    product: Product,
+    provider,
+    sources: List[Source],
+    claims: List[Claim],
+    source_by_id: Dict[str, Source],
+) -> List[Claim]:
+    """Дополняет детерминированный разбор утверждениями, найденными моделью.
+
+    Принимаются только утверждения с дословным фрагментом источника, которых
+    ещё нет среди найденных правилами.
+    """
+    if not getattr(provider, "uses_external_service", False):
+        return []
+
+    existing = {_normalize_claim_text(claim.text) for claim in claims}
+    created: List[Claim] = []
+
+    for source in sources:
+        text = source.text_content or ""
+        if not text.strip():
+            continue
+        try:
+            extracted = provider.extract_claims(
+                text,
+                {
+                    "product_name": product.name,
+                    "source_name": source.source_name,
+                },
+            )
+        except Exception as exc:  # pragma: no cover - защита от сбоя провайдера
+            logger.warning(
+                "Провайдер %s не смог извлечь утверждения: %s",
+                provider.name,
+                type(exc).__name__,
+            )
+            continue
+
+        for item in extracted:
+            excerpt = (item.source_excerpt or "").strip()
+            if not excerpt or excerpt not in text:
+                continue
+            normalized = _normalize_claim_text(item.text)
+            if not normalized or normalized in existing:
+                continue
+            existing.add(normalized)
+
+            claim = Claim(
+                product_id=product.id,
+                workspace_id=product.workspace_id,
+                source_id=source.id,
+                text=item.text[:2000],
+                claim_type=item.claim_type,
+                source_excerpt=excerpt,
+                extraction_method=ExtractionMethod.LLM_PROVIDER.value,
+                model_version=getattr(provider, "model", "") or None,
+                confidence_label=item.confidence_label,
+                confidence_status=item.confidence_label,
+                user_confirmed=False,
+                numeric_context=excerpt,
+            )
+            db.add(claim)
+            created.append(claim)
+
+    db.flush()
+    return created
+
+
+def _explain_findings_with_provider(provider, drafts, product, sources) -> Dict[str, object]:
+    """Запрашивает у модели пояснения к находкам.
+
+    Возвращает словарь {индекс находки: пояснение}. Пояснение не влияет на
+    тип и серьёзность находки — их определяют детерминированные правила.
+    """
+    if not getattr(provider, "uses_external_service", False) or not drafts:
+        return {}
+
+    from app.providers.base import FindingContext
+
+    contexts: List[FindingContext] = []
+    for index, draft in enumerate(drafts[:20]):
+        contexts.append(
+            FindingContext(
+                rule_id=draft.rule_id,
+                title=draft.title,
+                description=draft.description[:1500],
+                evidence_excerpts=[ref.excerpt for ref in draft.evidence[:5]],
+                limitations=draft.limitations,
+                key=str(index),
+            )
+        )
+
+    try:
+        suggestions = provider.explain_findings(
+            contexts,
+            {"product_name": product.name},
+        )
+    except Exception as exc:  # pragma: no cover - защита от сбоя провайдера
+        logger.warning(
+            "Провайдер %s не смог объяснить находки: %s",
+            provider.name,
+            type(exc).__name__,
+        )
+        return {}
+
+    by_key = {str(index): draft for index, draft in enumerate(drafts[:20])}
+    result: Dict[str, object] = {}
+    for suggestion in suggestions:
+        draft = by_key.get(str(suggestion.rule_id))
+        if draft is None:
+            continue
+        result[str(suggestion.rule_id)] = _ModelExplanation(
+            text=suggestion.explanation,
+            provider=provider.name,
+        )
+    return result
+
+
+@dataclass
+class _ModelExplanation:
+    text: str
+    provider: str

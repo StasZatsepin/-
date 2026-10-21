@@ -111,6 +111,8 @@ class FindingOut(BaseModel):
     rule_version: str
     origin: str
     archived: bool
+    explanation: str = ""
+    explanation_provider: str = ""
     created_at: datetime
     updated_at: datetime
 

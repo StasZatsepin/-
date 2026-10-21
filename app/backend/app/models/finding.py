@@ -44,6 +44,10 @@ class Finding(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     origin: Mapped[str] = mapped_column(String(60), default="rules", nullable=False)
     archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Пояснение внешней модели к находке (не влияет на тип и серьёзность).
+    explanation: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    explanation_provider: Mapped[str] = mapped_column(String(60), default="", nullable=False)
+
     product: Mapped["Product"] = relationship(back_populates="findings", lazy="joined")  # noqa: F821
     claim: Mapped["Claim | None"] = relationship(lazy="joined")  # noqa: F821
     review_actions: Mapped[list["ReviewAction"]] = relationship(  # noqa: F821

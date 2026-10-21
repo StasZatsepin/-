@@ -3,6 +3,9 @@
 # Контекст сборки — папка `app` (вместе с `backend/` и `sample_data/`),
 # чтобы сохранить структуру проекта внутри образа: конфигурация вычисляет
 # корневой каталог от расположения файлов и ищет демо-данные в app/sample_data.
+#
+# Файл называется Containerfile (а не Dockerfile) и лежит в корне контекста:
+# так его находят и podman-compose, и docker-compose.
 
 FROM docker.io/library/python:3.11-slim
 
@@ -22,6 +25,11 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 COPY backend/ /srv/app/backend/
 COPY sample_data/ /srv/app/sample_data/
 
+# Скрипт ожидания готовности базы: используется и миграциями, и backend'ом
+COPY backend/wait-for-db.sh /usr/local/bin/wait-for-db.sh
+COPY backend/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/wait-for-db.sh /usr/local/bin/entrypoint.sh
+
 # Непривилегированный пользователь и каталог загруженных файлов
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /srv/app/backend/var/storage \
@@ -34,4 +42,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=25s --retries=6 \
     CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"
 
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

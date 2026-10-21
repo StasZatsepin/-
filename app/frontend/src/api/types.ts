@@ -153,6 +153,8 @@ export interface Finding {
   rule_version: string
   origin: string
   archived: boolean
+  explanation: string
+  explanation_provider: string
   created_at: string
   updated_at: string
 }
@@ -219,6 +221,12 @@ export interface AiSettings {
     external_data_transfer: boolean
     fallback: string
   }
+  available_providers: Array<{
+    name: string
+    label: string
+    requires_api_key: boolean
+    hint: string
+  }>
   limits: {
     max_upload_bytes: number
     allowed_extensions: string[]
