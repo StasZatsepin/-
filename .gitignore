@@ -26,8 +26,9 @@ var/
 *.sqlite3
 
 # --- Отчёты и временные файлы ---
-reports/
-tmp/
+# Только корневая папка: шаблон отчёта в app/backend/app/reports должен быть в репозитории
+/reports/
+/tmp/
 *.log
 
 # --- IDE ---

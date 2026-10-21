@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { Evidence } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from './States'
-import { RELATION_LABELS, formatDate } from './labels'
+import { RELATION_BADGE, RELATION_LABELS, formatDate , formatCount } from './labels'
+import { IconFile, IconQuote, IconScale } from './icons'
 
 interface EvidenceTabProps {
   productId: string
@@ -27,34 +28,44 @@ export function EvidenceTab({ productId, reloadKey }: EvidenceTabProps) {
   }, [load, reloadKey])
 
   return (
-    <div className="card">
-      <div className="card-header">
+    <section className="panel">
+      <div className="panel-header">
         <div>
-          <h2>Доказательства ({evidence?.length ?? 0})</h2>
-          <p>Фрагменты источников, на которые опираются утверждения и находки.</p>
+          <h2>Доказательства ({formatCount(evidence?.length ?? 0, ['доказательство', 'доказательства', 'доказательств'])})</h2>
+          <p>Фрагменты источников, на которые опираются утверждения и результаты проверки</p>
         </div>
       </div>
 
-      {error && <ErrorMessage message={error} />}
+      {error && (
+        <div className="panel-body" style={{ paddingBottom: 0 }}>
+          <ErrorMessage message={error} />
+        </div>
+      )}
 
-      {!evidence && <Skeleton rows={4} />}
+      {!evidence && (
+        <div className="panel-body">
+          <Skeleton rows={4} />
+        </div>
+      )}
 
       {evidence && evidence.length === 0 && (
-        <EmptyState
-          title="Доказательств пока нет"
-          description="Запустите проверку: система сохранит фрагменты источников вместе с утверждениями."
-        />
+        <div className="panel-body">
+          <EmptyState
+            title="Доказательств пока нет"
+            description="Запустите проверку: система сохранит фрагменты источников вместе с утверждениями."
+            icon={<IconFile size={22} />}
+          />
+        </div>
       )}
 
       {evidence && evidence.length > 0 && (
         <div className="table-wrap">
-          <table>
+          <table className="data">
             <thead>
               <tr>
                 <th>Фрагмент</th>
                 <th>Источник</th>
                 <th>Отношение</th>
-                <th>Тип</th>
                 <th>Дата</th>
               </tr>
             </thead>
@@ -62,26 +73,30 @@ export function EvidenceTab({ productId, reloadKey }: EvidenceTabProps) {
               {evidence.map((item) => (
                 <tr key={item.id}>
                   <td>
-                    <div className="excerpt">{item.excerpt}</div>
-                    {item.relevance_note && (
-                      <div className="small muted">{item.relevance_note}</div>
-                    )}
+                    <div className="evidence-item" style={{ background: 'var(--surface-2)' }}>
+                      <span className="evidence-icon" aria-hidden="true">
+                        {item.evidence_type === 'review_statement' ? (
+                          <IconQuote size={15} />
+                        ) : item.evidence_type === 'attribute_value' ? (
+                          <IconScale size={15} />
+                        ) : (
+                          <IconFile size={15} />
+                        )}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="evidence-excerpt">{item.excerpt}</div>
+                        {item.relevance_note && (
+                          <div className="evidence-note">{item.relevance_note}</div>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="muted">{item.source_name ?? '—'}</td>
                   <td>
-                    <span
-                      className={`badge ${
-                        item.relation === 'supports'
-                          ? 'badge-success'
-                          : item.relation === 'contradicts'
-                            ? 'badge-high'
-                            : 'badge-info'
-                      }`}
-                    >
+                    <span className={`badge ${RELATION_BADGE[item.relation] ?? 'badge-neutral'}`}>
                       {RELATION_LABELS[item.relation] ?? item.relation}
                     </span>
                   </td>
-                  <td className="muted">{item.evidence_type}</td>
                   <td className="muted">{formatDate(item.date)}</td>
                 </tr>
               ))}
@@ -89,6 +104,6 @@ export function EvidenceTab({ productId, reloadKey }: EvidenceTabProps) {
           </table>
         </div>
       )}
-    </div>
+    </section>
   )
 }

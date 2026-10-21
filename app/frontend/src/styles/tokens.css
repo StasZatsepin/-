@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Дизайн-токены «Обещание против реальности»
+   Единая система цветов, типографики, отступов, радиусов и состояний.
+   ========================================================================== */
+
+:root {
+  /* --- Поверхности --- */
+  --surface: #ffffff;
+  --surface-2: #f7f8fa;
+  --surface-3: #eef1f5;
+  --canvas: #f2f4f7;
+  --canvas-deep: #e9edf2;
+
+  /* --- Графит: навигация и контрастные блоки --- */
+  --ink-950: #0c1117;
+  --ink-900: #111820;
+  --ink-850: #161f29;
+  --ink-800: #1c2733;
+  --ink-700: #26333f;
+  --ink-600: #35434f;
+
+  /* --- Текст --- */
+  --text: #0f172a;
+  --text-2: #4a5567;
+  --text-3: #8a94a6;
+  --text-inverse: #f2f5f8;
+  --text-inverse-2: #a7b1c0;
+  --text-inverse-3: #6f7c8c;
+
+  /* --- Границы --- */
+  --border: #e3e8ef;
+  --border-strong: #ccd5e0;
+  --border-dark: #2a3742;
+  --border-dark-soft: #202b36;
+
+  /* --- Акцент: индиго --- */
+  --accent: #4338ca;
+  --accent-600: #4f46e5;
+  --accent-700: #3730a3;
+  --accent-soft: #eef0fe;
+  --accent-soft-2: #e0e4fd;
+
+  /* --- Бирюзовый: подтверждённые данные --- */
+  --teal: #0d9488;
+  --teal-700: #0f766e;
+  --teal-soft: #e8faf6;
+
+  /* --- Семантические состояния --- */
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --danger-border: #fecdca;
+
+  --warn: #b54708;
+  --warn-soft: #fffaeb;
+  --warn-border: #fedf89;
+
+  --info: #026aa2;
+  --info-soft: #f0f9ff;
+  --info-border: #b9e6fe;
+
+  --violet: #6941c6;
+  --violet-soft: #f4f3ff;
+  --violet-border: #d9d6fe;
+
+  --neutral-soft: #f2f4f7;
+  --neutral-border: #e3e8ef;
+
+  /* --- Типографика --- */
+  --font-display: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+
+  /* --- Отступы --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* --- Радиусы --- */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+
+  /* --- Тени --- */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 18px 44px rgba(15, 23, 42, 0.1), 0 3px 10px rgba(15, 23, 42, 0.05);
+  --shadow-dark: 0 24px 60px rgba(3, 8, 15, 0.45);
+
+  /* --- Движение --- */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 130ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* --- Каркас --- */
+  --sidebar-w: 264px;
+  --content-max: 1320px;
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-overlay: 60;
+}

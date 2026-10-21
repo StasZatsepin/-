@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { FindingType, Severity, FindingStatus } from '../api/types'
+import type { FindingStatus, FindingType, Severity } from '../api/types'
+import { IconConflict, IconFile, IconInfo, IconMissing, IconQuote, IconScope } from './icons'
 
 export const FINDING_TYPE_LABELS: Record<FindingType, string> = {
   direct_conflict: 'Прямое расхождение',
@@ -7,7 +7,44 @@ export const FINDING_TYPE_LABELS: Record<FindingType, string> = {
   review_signal: 'Сигнал из отзывов',
   ambiguous_claim: 'Неоднозначное утверждение',
   document_scope_mismatch: 'Область применения документа',
-  needs_human_review: 'Нужна проверка человека',
+  needs_human_review: 'Нужна проверка человеком',
+}
+
+/** Визуальный класс значка и иконка для каждого типа находки. */
+export const FINDING_TYPE_META: Record<
+  FindingType,
+  { badge: string; icon: typeof IconConflict; description: string }
+> = {
+  direct_conflict: {
+    badge: 'badge-danger',
+    icon: IconConflict,
+    description: 'Источники сообщают разные значения одного параметра',
+  },
+  missing_evidence: {
+    badge: 'badge-info',
+    icon: IconMissing,
+    description: 'Проверяемое утверждение не подтверждено предоставленными материалами',
+  },
+  review_signal: {
+    badge: 'badge-teal',
+    icon: IconQuote,
+    description: 'Пользовательский опыт, который стоит проверить',
+  },
+  ambiguous_claim: {
+    badge: 'badge-violet',
+    icon: IconInfo,
+    description: 'Формулировку нельзя проверить объективно',
+  },
+  document_scope_mismatch: {
+    badge: 'badge-warn',
+    icon: IconScope,
+    description: 'Документ может относиться к другой модели или версии',
+  },
+  needs_human_review: {
+    badge: 'badge-warn',
+    icon: IconFile,
+    description: 'Данных недостаточно для автоматического вывода',
+  },
 }
 
 export const SEVERITY_LABELS: Record<Severity, string> = {
@@ -17,12 +54,27 @@ export const SEVERITY_LABELS: Record<Severity, string> = {
   high: 'Высокая',
 }
 
+export const SEVERITY_BADGE: Record<Severity, string> = {
+  info: 'badge-neutral',
+  low: 'badge-info',
+  medium: 'badge-warn',
+  high: 'badge-danger',
+}
+
 export const STATUS_LABELS: Record<FindingStatus, string> = {
   open: 'Открыта',
   in_review: 'На рассмотрении',
   resolved: 'Решена',
   not_an_issue: 'Не проблема',
   insufficient_data: 'Недостаточно данных',
+}
+
+export const STATUS_BADGE: Record<FindingStatus, string> = {
+  open: 'badge-neutral',
+  in_review: 'badge-accent',
+  resolved: 'badge-teal',
+  not_an_issue: 'badge-neutral',
+  insufficient_data: 'badge-warn',
 }
 
 export const SOURCE_TYPE_LABELS: Record<string, string> = {
@@ -62,6 +114,37 @@ export const RELATION_LABELS: Record<string, string> = {
   uncertain: 'неопределённо',
 }
 
+export const RELATION_BADGE: Record<string, string> = {
+  supports: 'badge-teal',
+  contradicts: 'badge-danger',
+  contextualizes: 'badge-info',
+  unrelated: 'badge-neutral',
+  uncertain: 'badge-neutral',
+}
+
+export const MARKETPLACE_LABELS: Record<string, string> = {
+  ozon: 'Ozon',
+  wildberries: 'Wildberries',
+  demo: 'Демо',
+  other: 'Другой',
+}
+
+/**
+ * Русское склонение числительных: plural(5, ['карточка', 'карточки', 'карточек']).
+ */
+export function plural(count: number, forms: [string, string, string]): string {
+  const absolute = Math.abs(count) % 100
+  const tail = absolute % 10
+  if (absolute > 10 && absolute < 20) return forms[2]
+  if (tail > 1 && tail < 5) return forms[1]
+  if (tail === 1) return forms[0]
+  return forms[2]
+}
+
+export function formatCount(count: number, forms: [string, string, string]): string {
+  return `${count} ${plural(count, forms)}`
+}
+
 export function formatDate(value?: string | null): string {
   if (!value) return '—'
   const date = new Date(value)
@@ -75,13 +158,20 @@ export function formatDate(value?: string | null): string {
   })
 }
 
+export function formatDateOnly(value?: string | null): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
 export function formatBytes(value?: number | null): string {
   if (!value) return '—'
   if (value < 1024) return `${value} Б`
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} КБ`
   return `${(value / (1024 * 1024)).toFixed(1)} МБ`
-}
-
-export function InfoBadge({ children }: { children: ReactNode }) {
-  return <span className="badge badge-info">{children}</span>
 }

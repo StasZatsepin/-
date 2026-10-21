@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import type { DragEvent, FormEvent } from 'react'
 import { api } from '../api/client'
 import type { Source } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from './States'
-import { SOURCE_TYPE_LABELS, formatBytes, formatDate } from './labels'
+import { SOURCE_TYPE_LABELS, formatBytes, formatDate , formatCount } from './labels'
+import { IconFile, IconInfo, IconTrash, IconUpload } from './icons'
 
 interface SourcesTabProps {
   productId: string
@@ -16,12 +17,29 @@ const MANUAL_TYPES = [
   { value: 'other', label: 'Прочее' },
 ]
 
+const EXTRACTION_BADGE: Record<string, string> = {
+  extracted: 'badge-teal',
+  needs_ocr: 'badge-warn',
+  empty: 'badge-neutral',
+  failed: 'badge-danger',
+  pending: 'badge-neutral',
+}
+
+const EXTRACTION_LABELS: Record<string, string> = {
+  extracted: 'текст извлечён',
+  needs_ocr: 'нужен OCR',
+  empty: 'нет текста',
+  failed: 'ошибка разбора',
+  pending: 'ожидает',
+}
+
 export function SourcesTab({ productId }: SourcesTabProps) {
   const [sources, setSources] = useState<Source[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [showManual, setShowManual] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const [manualName, setManualName] = useState('')
@@ -44,13 +62,7 @@ export function SourcesTab({ productId }: SourcesTabProps) {
     void load()
   }, [load])
 
-  async function handleUpload(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const file = fileInput.current?.files?.[0]
-    if (!file) {
-      setError('Выберите файл для загрузки')
-      return
-    }
+  async function uploadFile(file: File) {
     setUploading(true)
     setError(null)
     setNotice(null)
@@ -74,6 +86,13 @@ export function SourcesTab({ productId }: SourcesTabProps) {
     } finally {
       setUploading(false)
     }
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragOver(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) void uploadFile(file)
   }
 
   async function handleManualSubmit(event: FormEvent) {
@@ -114,21 +133,59 @@ export function SourcesTab({ productId }: SourcesTabProps) {
   return (
     <div className="stack">
       {error && <ErrorMessage message={error} />}
-      {notice && <div className="alert alert-success">{notice}</div>}
+      {notice && (
+        <div className="alert alert-success">
+          <span className="alert-icon">
+            <IconInfo size={16} />
+          </span>
+          <div>{notice}</div>
+        </div>
+      )}
 
-      <div className="card">
-        <div className="card-header">
+      <section className="panel">
+        <div className="panel-header">
           <div>
-            <h2>Загрузить источник</h2>
-            <p>Поддерживаются TXT, CSV, MD, XLSX и PDF с текстовым слоем.</p>
+            <h2>Добавить источник</h2>
+            <p>Поддерживаются TXT, CSV, MD, XLSX и PDF с текстовым слоем</p>
           </div>
         </div>
-        <form onSubmit={handleUpload}>
-          <div className="form-row">
-            <div className="field">
-              <label htmlFor="source-file">Файл</label>
-              <input id="source-file" ref={fileInput} type="file" accept=".txt,.csv,.md,.pdf,.xlsx" />
-            </div>
+        <div className="panel-body">
+          <div
+            className={dragOver ? 'dropzone is-over' : 'dropzone'}
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInput.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                fileInput.current?.click()
+              }
+            }}
+            onDragOver={(event) => {
+              event.preventDefault()
+              setDragOver(true)
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <span className="dropzone-icon">
+              <IconUpload size={20} />
+            </span>
+            <strong>{uploading ? 'Загружаем и разбираем файл…' : 'Перетащите файл сюда'}</strong>
+            <span>или нажмите, чтобы выбрать. Максимальный размер — 10 МБ</span>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".txt,.csv,.md,.pdf,.xlsx"
+              style={{ display: 'none' }}
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                if (file) void uploadFile(file)
+              }}
+            />
+          </div>
+
+          <div className="form-row" style={{ marginTop: 'var(--sp-4)' }}>
             <div className="field">
               <label htmlFor="applies-to-model">Область применения (модель)</label>
               <input
@@ -142,109 +199,120 @@ export function SourcesTab({ productId }: SourcesTabProps) {
               <input id="valid-until" type="date" />
             </div>
           </div>
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary" disabled={uploading}>
-              {uploading ? 'Загружаем…' : 'Загрузить файл'}
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setShowManual((current) => !current)}
+
+          <button
+            type="button"
+            className="btn"
+            onClick={() => setShowManual((current) => !current)}
+          >
+            {showManual ? 'Скрыть ввод вручную' : 'Ввести данные вручную'}
+          </button>
+
+          {showManual && (
+            <form
+              onSubmit={handleManualSubmit}
+              style={{
+                marginTop: 'var(--sp-5)',
+                paddingTop: 'var(--sp-5)',
+                borderTop: '1px solid var(--border)',
+              }}
             >
-              {showManual ? 'Скрыть ввод вручную' : 'Ввести вручную'}
-            </button>
-          </div>
-        </form>
-
-        {showManual && (
-          <form onSubmit={handleManualSubmit} style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <div className="form-row">
+              <div className="form-row">
+                <div className="field">
+                  <label htmlFor="manual-name">Название источника *</label>
+                  <input
+                    id="manual-name"
+                    type="text"
+                    value={manualName}
+                    required
+                    onChange={(event) => setManualName(event.target.value)}
+                    placeholder="Отзывы покупателей за май"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="manual-type">Тип</label>
+                  <select
+                    id="manual-type"
+                    value={manualType}
+                    onChange={(event) => setManualType(event.target.value)}
+                  >
+                    {MANUAL_TYPES.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="manual-model">Модель в области применения</label>
+                  <input
+                    id="manual-model"
+                    type="text"
+                    value={manualModel}
+                    onChange={(event) => setManualModel(event.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="manual-valid">Действует до</label>
+                  <input
+                    id="manual-valid"
+                    type="date"
+                    value={manualValidUntil}
+                    onChange={(event) => setManualValidUntil(event.target.value)}
+                  />
+                </div>
+              </div>
               <div className="field">
-                <label htmlFor="manual-name">Название источника *</label>
-                <input
-                  id="manual-name"
-                  type="text"
-                  value={manualName}
+                <label htmlFor="manual-text">Текст *</label>
+                <textarea
+                  id="manual-text"
+                  value={manualText}
                   required
-                  onChange={(event) => setManualName(event.target.value)}
-                  placeholder="Отзывы покупателей за май"
+                  rows={6}
+                  onChange={(event) => setManualText(event.target.value)}
+                  placeholder="Текст отзывов: каждый отзыв с новой строки или разделён пустой строкой."
                 />
+                <div className="field-hint">
+                  В отзывах полезно указывать оценку и дату — система использует их как контекст сигнала.
+                </div>
               </div>
-              <div className="field">
-                <label htmlFor="manual-type">Тип</label>
-                <select
-                  id="manual-type"
-                  value={manualType}
-                  onChange={(event) => setManualType(event.target.value)}
-                >
-                  {MANUAL_TYPES.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={manualSaving}>
+                  {manualSaving ? 'Сохраняем…' : 'Сохранить источник'}
+                </button>
               </div>
-              <div className="field">
-                <label htmlFor="manual-model">Модель в области применения</label>
-                <input
-                  id="manual-model"
-                  type="text"
-                  value={manualModel}
-                  onChange={(event) => setManualModel(event.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="manual-valid">Действует до</label>
-                <input
-                  id="manual-valid"
-                  type="date"
-                  value={manualValidUntil}
-                  onChange={(event) => setManualValidUntil(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label htmlFor="manual-text">Текст *</label>
-              <textarea
-                id="manual-text"
-                value={manualText}
-                required
-                rows={6}
-                onChange={(event) => setManualText(event.target.value)}
-                placeholder="Текст отзывов: каждый отзыв с новой строки или разделён пустой строкой."
-              />
-            </div>
-            <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={manualSaving}>
-                {manualSaving ? 'Сохраняем…' : 'Сохранить источник'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+            </form>
+          )}
+        </div>
+      </section>
 
-      <div className="card">
-        <div className="card-header">
+      <section className="panel">
+        <div className="panel-header">
           <div>
-            <h2>Источники товара ({sources?.length ?? 0})</h2>
-            <p>
-              Каждый источник хранит дату, хеш содержимого и результат извлечения текста.
-            </p>
+            <h2>Источники товара ({formatCount(sources?.length ?? 0, ['источник', 'источника', 'источников'])})</h2>
+            <p>Для каждого источника хранятся дата, хеш содержимого и результат извлечения текста</p>
           </div>
         </div>
 
-        {!sources && <Skeleton rows={4} />}
+        {!sources && (
+          <div className="panel-body">
+            <Skeleton rows={4} />
+          </div>
+        )}
 
         {sources && sources.length === 0 && (
-          <EmptyState
-            title="Источников пока нет"
-            description="Загрузите документ, файл отзывов или введите данные вручную. Без источников часть утверждений останется без подтверждения."
-          />
+          <div className="panel-body">
+            <EmptyState
+              title="Источников пока нет"
+              description="Загрузите документ, файл отзывов или введите данные вручную. Без источников часть утверждений останется без подтверждения."
+              icon={<IconFile size={22} />}
+            />
+          </div>
         )}
 
         {sources && sources.length > 0 && (
           <div className="table-wrap">
-            <table>
+            <table className="data">
               <thead>
                 <tr>
                   <th>Название</th>
@@ -260,35 +328,29 @@ export function SourcesTab({ productId }: SourcesTabProps) {
                 {sources.map((source) => (
                   <tr key={source.id}>
                     <td>
-                      <strong>{source.source_name}</strong>
+                      <span className="cell-title">{source.source_name}</span>
                       {source.extraction_note && (
-                        <div className="small muted">{source.extraction_note}</div>
+                        <div className="cell-sub">{source.extraction_note}</div>
                       )}
                       {source.text_preview && (
                         <details>
-                          <summary className="small muted">Показать текст</summary>
+                          <summary className="small muted" style={{ cursor: 'pointer' }}>
+                            Показать текст
+                          </summary>
                           <div className="excerpt">{source.text_preview}</div>
                         </details>
                       )}
                     </td>
                     <td>
-                      <span className="badge">
+                      <span className="badge badge-neutral">
                         {SOURCE_TYPE_LABELS[source.source_type] ?? source.source_type}
                       </span>
                     </td>
                     <td className="muted">{formatDate(source.source_date ?? source.uploaded_at)}</td>
                     <td className="muted">{formatBytes(source.size_bytes)}</td>
                     <td>
-                      <span
-                        className={`badge ${
-                          source.extraction_status === 'extracted'
-                            ? 'badge-success'
-                            : source.extraction_status === 'needs_ocr'
-                              ? 'badge-medium'
-                              : 'badge-info'
-                        }`}
-                      >
-                        {source.extraction_status}
+                      <span className={`badge ${EXTRACTION_BADGE[source.extraction_status] ?? 'badge-neutral'}`}>
+                        {EXTRACTION_LABELS[source.extraction_status] ?? source.extraction_status}
                       </span>
                     </td>
                     <td className="mono muted">{source.content_hash.slice(0, 12)}…</td>
@@ -299,6 +361,7 @@ export function SourcesTab({ productId }: SourcesTabProps) {
                           className="btn btn-sm btn-danger"
                           onClick={() => void handleDelete(source.id, source.source_name)}
                         >
+                          <IconTrash size={14} />
                           Удалить
                         </button>
                       </div>
@@ -309,7 +372,7 @@ export function SourcesTab({ productId }: SourcesTabProps) {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

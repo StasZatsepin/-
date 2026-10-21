@@ -31,7 +31,7 @@ const product = {
   last_run_status: 'completed',
 }
 
-describe('Список товаров', () => {
+describe('Каталог товаров', () => {
   it('показывает товары рабочего пространства', async () => {
     vi.mocked(api.listProducts).mockResolvedValue([product])
 
@@ -42,8 +42,9 @@ describe('Список товаров', () => {
     )
 
     expect(await screen.findByText('Беспроводные наушники X-500')).toBeInTheDocument()
-    expect(screen.getByText(/2 открыто/)).toBeInTheDocument()
+    expect(screen.getByText('2 к разбору')).toBeInTheDocument()
     expect(screen.getByText('Ozon')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
   })
 
   it('показывает пустое состояние, когда товаров нет', async () => {
@@ -56,7 +57,21 @@ describe('Список товаров', () => {
     )
 
     expect(await screen.findByText('Товаров пока нет')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Создать товар' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Создать товар/ }).length).toBeGreaterThan(0)
+  })
+
+  it('показывает подсказку при пустом поиске', async () => {
+    vi.mocked(api.listProducts).mockResolvedValue([])
+
+    render(
+      <MemoryRouter>
+        <ProductsPage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('Товаров пока нет')
+    const search = screen.getByLabelText('Поиск по товарам')
+    expect(search).toBeInTheDocument()
   })
 
   it('сообщает об ошибке загрузки', async () => {

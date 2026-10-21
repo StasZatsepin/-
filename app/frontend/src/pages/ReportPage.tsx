@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api, fetchReportHtml } from '../api/client'
 import { ErrorMessage, Loading } from '../components/States'
 import { formatDate } from '../components/labels'
+import { IconInfo, IconPrint } from '../components/icons'
 
 export function ReportPage() {
   const { productId = '', runId = '' } = useParams()
@@ -31,17 +32,20 @@ export function ReportPage() {
   return (
     <>
       <header className="topbar">
-        <div>
+        <div className="topbar-titles">
           <h1>Отчёт по проверке</h1>
           <div className="topbar-subtitle">
-            {run ? `${run.product_name} · ${formatDate(run.finished_at ?? run.created_at)}` : 'Загрузка…'}
+            {run
+              ? `${run.product_name} · ${formatDate(run.finished_at ?? run.created_at)}`
+              : 'Загрузка…'}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link className="btn" to={`/products/${productId}`}>
+        <div className="topbar-actions">
+          <Link className="btn" to={`/app/products/${productId}`}>
             К товару
           </Link>
           <button type="button" className="btn" onClick={() => window.print()}>
+            <IconPrint size={16} />
             Печать / PDF
           </button>
         </div>
@@ -54,8 +58,13 @@ export function ReportPage() {
         {html && (
           <>
             <div className="alert alert-info">
-              Автоматический анализ помогает выявлять возможные несоответствия и не является
-              юридическим заключением или независимым испытанием товара.
+              <span className="alert-icon">
+                <IconInfo size={16} />
+              </span>
+              <div>
+                Автоматический анализ помогает выявлять возможные несоответствия и не является
+                юридическим заключением или независимым испытанием товара.
+              </div>
             </div>
             <iframe
               className="report-frame"

@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import type { Claim } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from './States'
-import { CLAIM_TYPE_LABELS, CONFIDENCE_LABELS, formatDate } from './labels'
+import {
+  CLAIM_TYPE_LABELS,
+  CONFIDENCE_LABELS,
+  formatCount,
+  formatDate,
+} from './labels'
+import { IconFile } from './icons'
 
 interface ClaimsTabProps {
   productId: string
@@ -38,38 +44,49 @@ export function ClaimsTab({ productId, reloadKey }: ClaimsTabProps) {
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
+    <section className="panel">
+      <div className="panel-header">
         <div>
-          <h2>Утверждения ({claims?.length ?? 0})</h2>
+          <h2>Утверждения ({formatCount(claims?.length ?? 0, ['утверждение', 'утверждения', 'утверждений'])})</h2>
           <p>
-            Кандидаты извлекаются из описания и источников. Тип можно уточнить вручную —
-            проверка пересчитает находки.
+            Кандидаты извлекаются из описания и источников. Тип можно уточнить вручную — проверка
+            пересчитает результаты.
           </p>
         </div>
       </div>
 
-      {error && <ErrorMessage message={error} />}
+      {error && (
+        <div className="panel-body" style={{ paddingBottom: 0 }}>
+          <ErrorMessage message={error} />
+        </div>
+      )}
 
-      {!claims && <Skeleton rows={5} />}
+      {!claims && (
+        <div className="panel-body">
+          <Skeleton rows={5} />
+        </div>
+      )}
 
       {claims && claims.length === 0 && (
-        <EmptyState
-          title="Утверждения не найдены"
-          description="Запустите проверку товара — система извлечёт утверждения из описания и источников."
-        />
+        <div className="panel-body">
+          <EmptyState
+            title="Утверждения не найдены"
+            description="Запустите проверку товара — система извлечёт утверждения из описания и источников."
+            icon={<IconFile size={22} />}
+          />
+        </div>
       )}
 
       {claims && claims.length > 0 && (
         <div className="table-wrap">
-          <table>
+          <table className="data">
             <thead>
               <tr>
                 <th>Текст утверждения</th>
                 <th>Тип</th>
                 <th>Источник</th>
                 <th>Значение</th>
-                <th>Оценка</th>
+                <th>Статус оценки</th>
                 <th />
               </tr>
             </thead>
@@ -77,25 +94,25 @@ export function ClaimsTab({ productId, reloadKey }: ClaimsTabProps) {
               {claims.map((claim) => (
                 <tr key={claim.id} style={claim.is_rejected ? { opacity: 0.55 } : undefined}>
                   <td>
-                    {claim.text}
+                    <span className="cell-title">{claim.text}</span>
                     {claim.user_confirmed && (
-                      <span className="badge badge-success" style={{ marginLeft: 8 }}>
+                      <span className="badge badge-teal" style={{ marginLeft: 8 }}>
                         подтверждено
                       </span>
                     )}
                     {claim.is_rejected && (
-                      <span className="badge" style={{ marginLeft: 8 }}>
+                      <span className="badge badge-neutral" style={{ marginLeft: 8 }}>
                         отклонено
                       </span>
                     )}
-                    <div className="small muted">{formatDate(claim.created_at)}</div>
+                    <div className="cell-sub">{formatDate(claim.created_at)}</div>
                   </td>
                   <td>
                     <select
                       aria-label={`Тип утверждения: ${claim.text.slice(0, 40)}`}
                       value={claim.claim_type}
                       onChange={(event) => void update(claim, { claim_type: event.target.value })}
-                      style={{ minWidth: 170 }}
+                      style={{ minWidth: 190 }}
                     >
                       {CLAIM_TYPES.map((type) => (
                         <option key={type} value={type}>
@@ -118,9 +135,7 @@ export function ClaimsTab({ productId, reloadKey }: ClaimsTabProps) {
                       <button
                         type="button"
                         className="btn btn-sm"
-                        onClick={() =>
-                          void update(claim, { user_confirmed: !claim.user_confirmed })
-                        }
+                        onClick={() => void update(claim, { user_confirmed: !claim.user_confirmed })}
                       >
                         {claim.user_confirmed ? 'Снять подтверждение' : 'Подтвердить'}
                       </button>
@@ -139,6 +154,6 @@ export function ClaimsTab({ productId, reloadKey }: ClaimsTabProps) {
           </table>
         </div>
       )}
-    </div>
+    </section>
   )
 }

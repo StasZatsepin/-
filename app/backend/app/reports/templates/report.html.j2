@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отчёт по проверке: {{ product.name }}</title>
+<style>
+  :root {
+    --surface: #ffffff;
+    --surface-2: #f7f8fa;
+    --canvas: #f2f4f7;
+    --border: #e3e8ef;
+    --border-strong: #ccd5e0;
+    --text: #0f172a;
+    --text-2: #4a5567;
+    --text-3: #8a94a6;
+    --ink: #111820;
+    --accent: #4338ca;
+    --accent-soft: #eef0fe;
+    --teal: #0d9488;
+    --teal-soft: #e8faf6;
+    --danger: #b42318;
+    --danger-soft: #fef3f2;
+    --warn: #b54708;
+    --warn-soft: #fffaeb;
+    --info: #026aa2;
+    --info-soft: #f0f9ff;
+    --violet: #6941c6;
+    --violet-soft: #f4f3ff;
+    --font-display: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 24px 64px;
+    background: var(--canvas);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  header.card, section.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 30px;
+    margin-bottom: 18px;
+  }
+  h1 { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 6px; }
+  h2 { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 14px; }
+  h3 { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+  .muted { color: var(--text-2); font-size: 13px; }
+  .small { font-size: 12.5px; }
+  .disclaimer {
+    margin: 16px 0 0;
+    padding: 13px 16px;
+    background: var(--warn-soft);
+    border: 1px solid #fedf89;
+    border-left: 3px solid var(--warn);
+    border-radius: 8px;
+    font-size: 13px;
+    color: #7c3407;
+  }
+  .disclaimer strong { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th {
+    background: var(--surface-2);
+    color: var(--text-3);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text-2); font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-demo { background: var(--violet-soft); border-color: #d9d6fe; color: var(--violet); }
+  .badge-danger { background: var(--danger-soft); border-color: #fecdca; color: var(--danger); }
+  .badge-warn { background: var(--warn-soft); border-color: #fedf89; color: var(--warn); }
+  .badge-info { background: var(--info-soft); border-color: #b9e6fe; color: var(--info); }
+  .badge-teal { background: var(--teal-soft); border-color: #a7f3e4; color: #0f766e; }
+  .badge-accent { background: var(--accent-soft); border-color: #e0e4fd; color: #3730a3; }
+  .finding { border: 1px solid var(--border); border-left: 4px solid var(--border-strong); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+  .finding.high { border-left-color: var(--danger); }
+  .finding.medium { border-left-color: var(--warn); }
+  .finding.low { border-left-color: var(--info); }
+  .finding.info { border-left-color: var(--text-3); }
+  .finding-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+  .finding-body { white-space: pre-line; }
+  .excerpt {
+    background: var(--surface-2); border-left: 3px solid var(--border-strong);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 6px 0; font-size: 12.5px; white-space: pre-wrap;
+  }
+  .excerpt-source { display: block; font-size: 11.5px; color: var(--text-3); margin-bottom: 3px; }
+  .note {
+    margin-top: 10px; padding: 10px 13px; border-radius: 8px;
+    background: var(--surface-2); border: 1px solid var(--border); font-size: 12.5px; color: var(--text-2);
+  }
+  .note strong { color: var(--text); }
+  .note-action { background: var(--teal-soft); border-color: #a7f3e4; color: #115e59; }
+  .note-action strong { color: #0f766e; }
+  .kv { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; font-size: 13.5px; margin: 0; }
+  .kv dt { color: var(--text-2); }
+  .kv dd { margin: 0; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  footer { text-align: center; color: var(--text-3); font-size: 12px; padding: 18px 0 6px; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    header.card, section.card, .finding { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="card">
+    <h1>Отчёт по проверке карточки товара</h1>
+    <div class="muted">
+      Сформирован {{ generated_at }} · версия правил {{ run.rules_version if run else "—" }} ·
+      провайдер {{ run.provider_name if run else "—" }}
+    </div>
+    <p class="disclaimer"><strong>Важно.</strong> {{ disclaimer }}</p>
+  </header>
+
+  <section class="card">
+    <h2>Товар</h2>
+    <dl class="kv">
+      <dt>Название</dt><dd>{{ product.name }}</dd>
+      <dt>Категория</dt><dd>{{ product.category or "—" }}</dd>
+      <dt>Маркетплейс</dt><dd>{{ product.marketplace }}</dd>
+      <dt>Артикул / SKU</dt><dd>{{ product.sku or "—" }}</dd>
+      <dt>Дата анализа</dt>
+      <dd>{{ run.finished_at.strftime("%d.%m.%Y %H:%M") if run and run.finished_at else "—" }}</dd>
+      {% if product.is_demo %}
+      <dt>Режим данных</dt>
+      <dd><span class="badge badge-demo">демонстрационные синтетические данные</span></dd>
+      {% endif %}
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Источники ({{ sources | length }})</h2>
+    <table>
+      <thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Загружен</th><th>Хеш</th><th>Разбор</th></tr></thead>
+      <tbody>
+      {% for source in sources %}
+        <tr>
+          <td>
+            {{ source.name }}
+            {% if source.is_demo %}<span class="badge badge-demo">демо</span>{% endif %}
+          </td>
+          <td class="muted">{{ source.type }}</td>
+          <td class="muted">{{ source.date }}</td>
+          <td class="muted">{{ source.uploaded_at }}</td>
+          <td class="muted">{{ source.hash }}</td>
+          <td class="muted">
+            {{ source.extraction_status }}
+            {% if source.extraction_note %}<br>{{ source.extraction_note }}{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="muted">Источники не загружены.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Утверждения ({{ claims | length }})</h2>
+    <table>
+      <thead><tr><th>Текст утверждения</th><th>Тип</th><th>Источник</th><th>Статус оценки</th></tr></thead>
+      <tbody>
+      {% for claim in claims %}
+        <tr>
+          <td>
+            {{ claim.text }}
+            {% if claim.confirmed %}<span class="badge badge-teal">подтверждено</span>{% endif %}
+          </td>
+          <td class="muted">{{ claim.type }}</td>
+          <td class="muted">{{ claim.source }}</td>
+          <td class="muted">{{ claim.confidence_status }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">Утверждения не найдены.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Результаты проверки ({{ findings | length }})</h2>
+    {% for finding in findings %}
+      <div class="finding {{ finding.severity_raw }}">
+        <h3>{{ finding.title }}</h3>
+        <div class="finding-meta">
+          <span class="badge {% if finding.severity_raw == 'high' %}badge-danger{% elif finding.severity_raw == 'medium' %}badge-warn{% elif finding.severity_raw == 'low' %}badge-info{% endif %}">{{ finding.severity }}</span>
+          <span class="badge badge-accent">{{ finding.type }}</span>
+          <span class="badge">{{ finding.status }}</span>
+          <span class="muted small">{{ finding.rule }}</span>
+        </div>
+        <div class="finding-body">{{ finding.description }}</div>
+        {% if finding.sources %}
+        <div style="margin-top: 12px">
+          <div class="muted small">Основание вывода:</div>
+          {% for ref in finding.sources %}
+            <div class="excerpt">
+              <span class="excerpt-source">{{ ref.name }} · {{ ref.relation }}</span>
+              {{ ref.excerpt }}
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if finding.limitations %}
+        <div class="note"><strong>Ограничение вывода.</strong> {{ finding.limitations }}</div>
+        {% endif %}
+        {% if finding.recommended_action %}
+        <div class="note note-action"><strong>Рекомендуемое действие.</strong> {{ finding.recommended_action }}</div>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="muted">Результатов нет: в предоставленных материалах расхождений не обнаружено либо проверка ещё не запускалась.</p>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Решения пользователя ({{ decisions | length }})</h2>
+    <table>
+      <thead><tr><th>Дата</th><th>Пользователь</th><th>Результат</th><th>Переход статуса</th><th>Комментарий</th></tr></thead>
+      <tbody>
+      {% for decision in decisions %}
+        <tr>
+          <td class="muted">{{ decision.created_at }}</td>
+          <td class="muted">{{ decision.user }}</td>
+          <td>{{ decision.finding_title }}</td>
+          <td class="muted">{{ decision.previous }} → {{ decision.new }}</td>
+          <td class="muted">{{ decision.comment }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">Решений пользователя пока нет.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>Ограничения анализа</h2>
+    <ul>
+      {% for limitation in limitations %}
+      <li>{{ limitation }}</li>
+      {% endfor %}
+      <li>Проверка выполнялась только по материалам, предоставленным пользователем.</li>
+      <li>Документы не проверялись по государственным реестрам на действительность.</li>
+      <li>Отзывы рассматриваются как пользовательские сигналы, а не как доказательства.</li>
+    </ul>
+  </section>
+
+  <footer>«Обещание против реальности» · {{ disclaimer }}</footer>
+</div>
+</body>
+</html>

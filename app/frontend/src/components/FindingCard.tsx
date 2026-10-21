@@ -3,9 +3,15 @@ import type { Finding, FindingStatus } from '../api/types'
 import { api } from '../api/client'
 import {
   FINDING_TYPE_LABELS,
+  FINDING_TYPE_META,
+  RELATION_BADGE,
+  RELATION_LABELS,
+  SEVERITY_BADGE,
   SEVERITY_LABELS,
+  STATUS_BADGE,
   STATUS_LABELS,
 } from './labels'
+import { IconCheck, IconFile, IconInfo, IconQuote, IconScale } from './icons'
 
 interface FindingCardProps {
   finding: Finding
@@ -20,11 +26,21 @@ const STATUS_OPTIONS: FindingStatus[] = [
   'insufficient_data',
 ]
 
+/**
+ * Карточка результата проверки — ключевой экран продукта.
+ *
+ * Показывает: что найдено, на основании чего, чего не хватает и что делать дальше.
+ * Доказательства расходятся с утверждением не смешиваются: у каждого фрагмента
+ * подписан источник и отношение к находке.
+ */
 export function FindingCard({ finding, onUpdated }: FindingCardProps) {
   const [status, setStatus] = useState<FindingStatus>(finding.status)
   const [comment, setComment] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const typeMeta = FINDING_TYPE_META[finding.finding_type]
+  const TypeIcon = typeMeta.icon
 
   async function applyStatus(next: FindingStatus) {
     setSaving(true)
@@ -60,59 +76,105 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
   }
 
   return (
-    <article className={`finding severity-${finding.severity}`}>
-      <div className="finding-head">
-        <div>
-          <div className="finding-title">{finding.title}</div>
+    <article className={`finding sev-${finding.severity}`}>
+      <div className="finding-body">
+        <span className="finding-accent" aria-hidden="true" />
+
+        <div className="finding-main">
+          <div className="finding-head">
+            <h3 className="finding-title">{finding.title}</h3>
+            <span className={`badge ${STATUS_BADGE[status]}`}>{STATUS_LABELS[status]}</span>
+          </div>
+
           <div className="finding-meta">
-            <span className={`badge badge-${finding.severity}`}>
+            <span className={`badge ${SEVERITY_BADGE[finding.severity]}`}>
               <span className="badge-dot" aria-hidden="true" />
               {SEVERITY_LABELS[finding.severity]}
             </span>
-            <span className="badge">{FINDING_TYPE_LABELS[finding.finding_type]}</span>
-            <span className={`badge ${status === 'resolved' ? 'badge-success' : 'badge-accent'}`}>
-              {STATUS_LABELS[status]}
+            <span className={`badge ${typeMeta.badge}`}>
+              <TypeIcon size={13} />
+              {FINDING_TYPE_LABELS[finding.finding_type]}
             </span>
-            <span className="badge">правило {finding.rule_id || finding.origin}</span>
+            <span className="badge badge-neutral">правило {finding.rule_id || finding.origin}</span>
           </div>
+
+          <p className="finding-text">{finding.description}</p>
+
+          {finding.source_refs.length > 0 && (
+            <div className="finding-section">
+              <div className="finding-section-label">
+                <IconFile size={13} />
+                Основание вывода
+              </div>
+              <div className="evidence-list">
+                {finding.source_refs.map((ref, index) => (
+                  <div className="evidence-item" key={`${ref.source_id ?? 'ref'}-${index}`}>
+                    <span className="evidence-icon" aria-hidden="true">
+                      {ref.evidence_type === 'review_statement' ? (
+                        <IconQuote size={15} />
+                      ) : ref.evidence_type === 'attribute_value' ? (
+                        <IconScale size={15} />
+                      ) : (
+                        <IconFile size={15} />
+                      )}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="evidence-source">
+                        <span>{ref.source_name}</span>
+                        <span className={`badge ${RELATION_BADGE[ref.relation] ?? 'badge-neutral'}`}>
+                          {RELATION_LABELS[ref.relation] ?? ref.relation}
+                        </span>
+                      </div>
+                      <div className="evidence-excerpt">{ref.excerpt}</div>
+                      {ref.note && <div className="evidence-note">{ref.note}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {finding.limitations && (
+            <div className="finding-section">
+              <div className="callout callout-limit">
+                <span className="callout-icon" aria-hidden="true">
+                  <IconInfo size={16} />
+                </span>
+                <div>
+                  <strong>Ограничение вывода</strong>
+                  {finding.limitations}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {finding.recommended_action && (
+            <div className="finding-section">
+              <div className="callout callout-action">
+                <span className="callout-icon" aria-hidden="true">
+                  <IconCheck size={16} />
+                </span>
+                <div>
+                  <strong>Рекомендуемое действие</strong>
+                  {finding.recommended_action}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="finding-body">{finding.description}</div>
-
-      {finding.source_refs.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <div className="small muted">Основание вывода:</div>
-          {finding.source_refs.map((ref, index) => (
-            <div className="excerpt" key={`${ref.source_id ?? 'ref'}-${index}`}>
-              <span className="excerpt-source">
-                {ref.source_name} · {ref.relation}
-              </span>
-              {ref.excerpt}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {finding.limitations && (
-        <div className="note-block">
-          <strong>Ограничение.</strong> {finding.limitations}
-        </div>
-      )}
-      {finding.recommended_action && (
-        <div className="note-block">
-          <strong>Рекомендуемое действие.</strong> {finding.recommended_action}
-        </div>
-      )}
-
       {error && (
-        <div className="alert alert-error" style={{ marginTop: 12, marginBottom: 0 }}>
-          {error}
+        <div className="alert alert-error" style={{ margin: '0 var(--sp-5) var(--sp-4)' }}>
+          <span className="alert-icon">
+            <IconInfo size={16} />
+          </span>
+          <div>{error}</div>
         </div>
       )}
 
-      <div className="inline-form" style={{ marginTop: 14 }}>
-        <div className="field" style={{ flex: 1, minWidth: 260 }}>
+      <div className="finding-footer">
+        <div className="field">
           <label htmlFor={`status-${finding.id}`}>Статус рассмотрения</label>
           <select
             id={`status-${finding.id}`}
@@ -135,10 +197,8 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
         >
           {saving ? 'Сохраняем…' : 'Сменить статус'}
         </button>
-      </div>
 
-      <div className="inline-form" style={{ marginTop: 10 }}>
-        <div className="field" style={{ flex: 1, minWidth: 260 }}>
+        <div className="field">
           <label htmlFor={`comment-${finding.id}`}>Комментарий решения</label>
           <input
             id={`comment-${finding.id}`}

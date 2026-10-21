@@ -1,67 +1,122 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LogoMark, LogoWordmark } from './Logo'
+import {
+  IconChecks,
+  IconClose,
+  IconHistory,
+  IconLogout,
+  IconMenu,
+  IconOverview,
+  IconProducts,
+  IconSettings,
+} from './icons'
 import { useAuth } from '../context/AuthContext'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Обзор', icon: '◧', end: true },
-  { to: '/products', label: 'Товары', icon: '▤', end: false },
-  { to: '/checks', label: 'Проверки', icon: '✔', end: false },
-  { to: '/history', label: 'История', icon: '↺', end: false },
-  { to: '/settings', label: 'Настройки', icon: '⚙', end: false },
+  { to: '/app', label: 'Обзор', icon: IconOverview, end: true },
+  { to: '/app/products', label: 'Товары', icon: IconProducts, end: false },
+  { to: '/app/checks', label: 'Проверки', icon: IconChecks, end: false },
+  { to: '/app/history', label: 'История', icon: IconHistory, end: false },
+  { to: '/app/settings', label: 'Настройки', icon: IconSettings, end: false },
 ]
 
 export function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname])
 
   function handleLogout() {
     logout()
     navigate('/login', { replace: true })
   }
 
+  const initials = (user?.display_name || user?.email || 'П')
+    .slice(0, 1)
+    .toUpperCase()
+
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            ПР
-          </div>
-          <div className="brand-text">
-            <strong>Обещание против реальности</strong>
-            <span>Проверка товарных утверждений</span>
-          </div>
+      {menuOpen && (
+        <div
+          className="sidebar-backdrop"
+          role="presentation"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
+
+      <aside className={menuOpen ? 'sidebar is-open' : 'sidebar'}>
+        <NavLink to="/app" className="sidebar-brand">
+          <LogoMark size={36} variant="dark" />
+          <LogoWordmark variant="dark" compact />
+        </NavLink>
+
+        <div>
+          <div className="sidebar-section-label">Рабочее пространство</div>
+          <nav className="nav" aria-label="Основная навигация" style={{ marginTop: 8 }}>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                  <span className="nav-icon">
+                    <Icon size={18} />
+                  </span>
+                  <span>{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
         </div>
 
-        <nav className="nav" aria-label="Основная навигация">
-          {NAV_ITEMS.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-            >
-              <span className="nav-icon" aria-hidden="true">
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
         <div className="sidebar-footer">
-          <strong>{user?.workspace?.name ?? 'Рабочее пространство'}</strong>
-          <div>{user?.email}</div>
-          {user?.workspace?.is_demo && (
-            <div style={{ marginTop: 6 }}>
-              <span className="badge badge-medium">демо-режим</span>
-            </div>
-          )}
-          <button type="button" className="btn btn-sm" style={{ marginTop: 10 }} onClick={handleLogout}>
-            Выйти
-          </button>
+          <div className="workspace-card">
+            <strong>{user?.workspace?.name ?? 'Рабочее пространство'}</strong>
+            <span>{user?.workspace?.is_demo ? 'Демонстрационные данные' : 'Рабочие данные'}</span>
+          </div>
+          <div className="sidebar-user">
+            <span className="avatar" aria-hidden="true">
+              {initials}
+            </span>
+            <span className="sidebar-user-meta">
+              <strong>{user?.display_name || 'Пользователь'}</strong>
+              <span>{user?.email}</span>
+            </span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--text-inverse-2)', padding: 6 }}
+              onClick={handleLogout}
+              aria-label="Выйти из рабочего пространства"
+              title="Выйти"
+            >
+              <IconLogout size={17} />
+            </button>
+          </div>
         </div>
       </aside>
 
       <div className="main">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm mobile-nav-toggle"
+          style={{ position: 'fixed', top: 12, left: 12, zIndex: 50 }}
+          onClick={() => setMenuOpen((value) => !value)}
+          aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? <IconClose size={20} /> : <IconMenu size={20} />}
+        </button>
+
         <Outlet />
       </div>
     </div>

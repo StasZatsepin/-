@@ -4,6 +4,7 @@ import { Loading } from './components/States'
 import { useAuth } from './context/AuthContext'
 import { ChecksPage } from './pages/ChecksPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { ProductFormPage } from './pages/ProductFormPage'
@@ -33,6 +34,7 @@ function Protected({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route
         element={
@@ -41,15 +43,15 @@ export function App() {
           </Protected>
         }
       >
-        <Route path="/" element={<OverviewPage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/new" element={<ProductFormPage />} />
-        <Route path="/products/:productId" element={<ProductPage />} />
-        <Route path="/products/:productId/edit" element={<ProductFormPage />} />
-        <Route path="/products/:productId/report/:runId" element={<ReportPage />} />
-        <Route path="/checks" element={<ChecksPage />} />
-        <Route path="/history" element={<HistoryPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/app" element={<OverviewPage />} />
+        <Route path="/app/products" element={<ProductsPage />} />
+        <Route path="/app/products/new" element={<ProductFormPage />} />
+        <Route path="/app/products/:productId" element={<ProductPage />} />
+        <Route path="/app/products/:productId/edit" element={<ProductFormPage />} />
+        <Route path="/app/products/:productId/report/:runId" element={<ReportPage />} />
+        <Route path="/app/checks" element={<ChecksPage />} />
+        <Route path="/app/history" element={<HistoryPage />} />
+        <Route path="/app/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

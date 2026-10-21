@@ -1,15 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client'
 import type { Finding, FindingStatus, FindingType, Severity } from '../api/types'
 import { FindingCard } from './FindingCard'
 import { EmptyState, ErrorMessage, Skeleton } from './States'
-import { FINDING_TYPE_LABELS, SEVERITY_LABELS, STATUS_LABELS } from './labels'
+import {
+  FINDING_TYPE_LABELS,
+  FINDING_TYPE_META,
+  SEVERITY_LABELS,
+  STATUS_LABELS,
+  formatCount,
+} from './labels'
+import { IconFilter, IconInfo } from './icons'
 
 interface FindingsTabProps {
   productId: string
   reloadKey: number
 }
 
+/**
+ * Список результатов проверки с фильтрами.
+ *
+ * Фильтры по типу и серьёзности помогают отделить доказанные расхождения от слабых
+ * сигналов и неопределённости — поэтому они вынесены в отдельный блок.
+ */
 export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
   const [findings, setFindings] = useState<Finding[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +45,7 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
     try {
       setFindings(await api.listFindings(productId, params))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось загрузить находки')
+      setError(err instanceof Error ? err.message : 'Не удалось загрузить результаты')
     }
   }, [productId, params])
 
@@ -48,20 +61,22 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
     return result
   }, [findings])
 
-  return (
-    <div className="stack">
-      {error && <ErrorMessage message={error} onRetry={() => void load()} />}
+  const hasFilters = Boolean(statusFilter || typeFilter || severityFilter || includeArchived)
 
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h2>Находки ({findings?.length ?? 0})</h2>
-            <p>
-              Каждая находка показывает, что найдено, на основании чего, чего не хватает и что
-              делать дальше.
-            </p>
-          </div>
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Результаты проверки ({formatCount(findings?.length ?? 0, ['результат', 'результата', 'результатов'])})</h2>
+          <p>
+            Каждый результат отвечает на четыре вопроса: что найдено, на основании чего, чего не
+            хватает и что делать дальше.
+          </p>
         </div>
+      </div>
+
+      <div className="panel-body" style={{ paddingBottom: 0 }}>
+        {error && <ErrorMessage message={error} onRetry={() => void load()} />}
 
         <div className="toolbar">
           <div className="field">
@@ -83,7 +98,7 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
           </div>
           <div className="field">
             <label htmlFor="filter-type" className="small">
-              Тип находки
+              Тип сигнала
             </label>
             <select
               id="filter-type"
@@ -115,45 +130,70 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
               ))}
             </select>
           </div>
-          <label className="small" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <label className="checkbox">
             <input
               type="checkbox"
               checked={includeArchived}
               onChange={(event) => setIncludeArchived(event.target.checked)}
-              style={{ width: 'auto' }}
             />
             Показать архивные
           </label>
+          {hasFilters && (
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              onClick={() => {
+                setStatusFilter('')
+                setTypeFilter('')
+                setSeverityFilter('')
+                setIncludeArchived(false)
+              }}
+            >
+              <IconFilter size={14} />
+              Сбросить фильтры
+            </button>
+          )}
         </div>
 
+        {findings && findings.length > 0 && (
+          <div className="chip-row" style={{ marginBottom: 'var(--sp-4)' }}>
+            {Object.entries(counts).map(([type, count]) => {
+              const meta = FINDING_TYPE_META[type as FindingType]
+              const Icon = meta?.icon
+              return (
+                <span className={`badge ${meta?.badge ?? 'badge-neutral'}`} key={type}>
+                  {Icon && <Icon size={13} />}
+                  {FINDING_TYPE_LABELS[type as FindingType] ?? type}: {count}
+                </span>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="panel-body">
         {!findings && <Skeleton rows={4} />}
 
         {findings && findings.length === 0 && (
           <EmptyState
-            title="Находок нет"
-            description="Либо проверка ещё не запускалась, либо в предоставленных материалах расхождений не обнаружено. Запустите проверку после загрузки источников."
+            title={hasFilters ? 'Под фильтры ничего не подходит' : 'Результатов нет'}
+            description={
+              hasFilters
+                ? 'Измените условия фильтрации или сбросьте их, чтобы увидеть все результаты проверки.'
+                : 'Либо проверка ещё не запускалась, либо в предоставленных материалах расхождений не обнаружено.'
+            }
+            icon={<IconInfo size={22} />}
           />
         )}
 
         {findings && findings.length > 0 && (
-          <>
-            <div className="chip-row" style={{ marginBottom: 14 }}>
-              {Object.entries(counts).map(([type, count]) => (
-                <span className="badge badge-accent" key={type}>
-                  {FINDING_TYPE_LABELS[type as FindingType] ?? type}: {count}
-                </span>
-              ))}
-            </div>
+          <div>
             {findings.map((finding) => (
-              <FindingCard
-                key={finding.id}
-                finding={finding}
-                onUpdated={() => void load()}
-              />
+              <FindingCard key={finding.id} finding={finding} onUpdated={() => void load()} />
             ))}
-          </>
+          </div>
         )}
       </div>
-    </div>
+    </section>
   )
 }

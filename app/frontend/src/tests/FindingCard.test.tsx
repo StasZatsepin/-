@@ -23,6 +23,14 @@ const finding: Finding = {
       evidence_type: 'description_text',
       note: '',
     },
+    {
+      source_id: 'source-2',
+      source_name: 'Таблица характеристик',
+      excerpt: 'battery_life_hours: 30',
+      relation: 'contradicts',
+      evidence_type: 'attribute_value',
+      note: 'Значение расходится с таблицей характеристик.',
+    },
   ],
   limitations: 'Условия измерения не указаны.',
   recommended_action: 'Привести описание в соответствие с характеристиками.',
@@ -36,8 +44,8 @@ const finding: Finding = {
   updated_at: '2026-01-01T10:00:00Z',
 }
 
-describe('Карточка находки', () => {
-  it('показывает основание, ограничение и рекомендацию', () => {
+describe('Карточка результата проверки', () => {
+  it('показывает объяснение, основание, ограничение и рекомендацию', () => {
     render(
       <MemoryRouter>
         <FindingCard finding={finding} />
@@ -45,12 +53,22 @@ describe('Карточка находки', () => {
     )
 
     expect(screen.getByText(finding.title)).toBeInTheDocument()
-    expect(screen.getByText(/До 48 часов работы/)).toBeInTheDocument()
+    expect(screen.getByText(/В описании указано 48 часов/)).toBeInTheDocument()
+
+    // Основание вывода с фрагментом и источником
+    expect(screen.getByText('Основание вывода')).toBeInTheDocument()
+    expect(screen.getByText('До 48 часов работы без подзарядки.')).toBeInTheDocument()
+    expect(screen.getByText('battery_life_hours: 30')).toBeInTheDocument()
+    expect(screen.getByText('Описание товара')).toBeInTheDocument()
+
+    // Ограничение и рекомендация
+    expect(screen.getByText('Ограничение вывода')).toBeInTheDocument()
     expect(screen.getByText(/Условия измерения не указаны/)).toBeInTheDocument()
+    expect(screen.getByText('Рекомендуемое действие')).toBeInTheDocument()
     expect(screen.getByText(/Привести описание в соответствие/)).toBeInTheDocument()
   })
 
-  it('подписывает тип и серьёзность находки', () => {
+  it('подписывает тип сигнала, серьёзность и статус', () => {
     render(
       <MemoryRouter>
         <FindingCard finding={finding} />
@@ -73,6 +91,7 @@ describe('Карточка находки', () => {
     const select = screen.getByLabelText('Статус рассмотрения') as HTMLSelectElement
     expect(select.value).toBe('open')
     expect(screen.getByRole('option', { name: 'Решена' })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Недостаточно данных' })).toBeInTheDocument()
   })
 
   it('не содержит обвинительных формулировок', () => {
@@ -85,5 +104,6 @@ describe('Карточка находки', () => {
     const text = document.body.textContent?.toLowerCase() ?? ''
     expect(text).not.toContain('мошенник')
     expect(text).not.toContain('недобросовестн')
+    expect(text).not.toContain('подделк')
   })
 })
