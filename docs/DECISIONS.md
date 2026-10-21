@@ -250,3 +250,54 @@ shell, БД и внешним URL.
 (`app/backend/app/reports/templates/report.html.j2`) никогда не попадал в репозиторий.
 На чистом клоне отчёт не формировался. Проверка выполнена командой
 `git check-ignore -v <путь>`; ожидаемый код возврата — 1 (файл не игнорируется).
+
+---
+
+## Д17. Контейнеризация через Podman
+
+**Решение.** Добавлены `compose.yaml`, `app/backend/Containerfile`,
+`app/frontend/Containerfile`, `app/frontend/nginx.conf`,
+`app/frontend/docker-entrypoint.sh`, `app/.dockerignore`, `scripts/podman.ps1` и
+`docs/PODMAN_SETUP.md`. Docker Desktop не используется.
+
+**Состав стека.** Четыре сервиса: `db` (PostgreSQL 16-alpine), `migrate`
+(одноразовый `alembic upgrade head`), `backend` (FastAPI + uvicorn), `frontend`
+(nginx со статикой Vite). Порядок запуска задан через `depends_on` с условиями
+`service_healthy` и `service_completed_successfully`: backend стартует только
+после успешного завершения миграций, frontend — после того, как backend здоров.
+
+**Почему frontend — nginx, а не `vite preview`.** `vite preview` — это сервер
+для предпросмотра сборки, а не production-сервер: он не рассчитан на
+эксплуатацию и не умеет проксировать API. Статика раздаётся nginx, а `/api`
+проксируется на backend — браузер работает с одним origin, CORS не нужен,
+относительные пути `/api/v1` работают так же, как в dev-режиме. Клиентская
+маршрутизация поддержана через `try_files $uri $uri/ /index.html`, иначе
+перезагрузка страницы `/app/products/...` давала бы 404.
+
+**Изоляция от локальной БД.** У контейнерной базы свои учётные данные, свой
+именованный том `obeshchanie-pgdata` и порт `55432` на Windows: локальные
+`5432` и `5433` уже заняты установленным PostgreSQL. Переменная `DATABASE_URL`
+из `.env` в контейнеры не попадает — адрес задаётся явно как `db:5432`.
+Локальная база, её данные, `.env` и пользовательские файлы не изменяются.
+
+**Имя проекта задано явно** (`name: obeshchanie` в compose.yaml): имя папки
+содержит пробелы и кириллицу, из-за чего автоматическое имя проекта дало бы
+недопустимые имена контейнеров и томов.
+
+**Резолвер nginx вычисляется при старте.** В compose-сети Podman адрес
+DNS-сервера не фиксирован (в этой сети — `10.89.0.1`, а не `127.0.0.11`).
+Жёстко прописанный `resolver 127.0.0.11` приводил к зависанию проксирования
+на backend: nginx писал `recv() failed (111: Connection refused) while
+resolving`. Точка входа `app/frontend/docker-entrypoint.sh` берёт первый
+`nameserver` из `/etc/resolv.conf` и подставляет его в шаблон конфигурации.
+
+**Тесты внутри контейнеров.** Backend-тесты идут против отдельной базы
+`obeshchanie_test` внутри контейнерного PostgreSQL (тест миграций с
+`downgrade base` не должен трогать рабочую базу). Для frontend добавлен
+необязательный этап образа `test`: `podman build --target test -f
+app/frontend/Containerfile app`.
+
+**Нативный режим сохранён.** Скрипты `scripts/run-backend.ps1` и
+`scripts/run-frontend.ps1` не изменялись; локальная БД и `.env` работают как
+прежде. Оба режима можно чередовать, но порт `8000` общий — для одновременного
+запуска порт контейнерного backend меняется переменной `BACKEND_HOST_PORT`.

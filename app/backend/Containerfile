@@ -1,0 +1,37 @@
+# Containerfile backend «Обещание против реальности».
+#
+# Контекст сборки — папка `app` (вместе с `backend/` и `sample_data/`),
+# чтобы сохранить структуру проекта внутри образа: конфигурация вычисляет
+# корневой каталог от расположения файлов и ищет демо-данные в app/sample_data.
+
+FROM docker.io/library/python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/srv/app/backend
+
+WORKDIR /srv/app/backend
+
+# Зависимости отдельным слоем: пересобираются только при изменении requirements.txt
+COPY backend/requirements.txt ./requirements.txt
+RUN python -m pip install --no-cache-dir -r requirements.txt
+
+# Код приложения и синтетические демо-материалы
+COPY backend/ /srv/app/backend/
+COPY sample_data/ /srv/app/sample_data/
+
+# Непривилегированный пользователь и каталог загруженных файлов
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /srv/app/backend/var/storage \
+    && chown -R appuser:appuser /srv/app
+USER appuser
+
+EXPOSE 8000
+
+# Проверка готовности без дополнительных пакетов (в образе нет curl)
+HEALTHCHECK --interval=10s --timeout=5s --start-period=25s --retries=6 \
+    CMD python -c "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

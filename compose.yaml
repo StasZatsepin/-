@@ -1,0 +1,159 @@
+# Podman Compose — «Обещание против реальности»
+#
+# Запуск:
+#   podman compose up -d --build
+#   podman compose ps
+#   podman compose logs -f
+#   podman compose down
+#
+# Имя проекта задано явно: имя папки содержит пробелы и кириллицу,
+# из-за чего автоматическое имя проекта дало бы недопустимые имена контейнеров.
+#
+# Контейнерная база изолирована от локального PostgreSQL в Windows:
+# свои учётные данные, свой именованный том, порт 5433 вместо 5432.
+# Локальная база и файл .env не затрагиваются.
+
+name: obeshchanie
+
+services:
+  # ---------------------------------------------------------------- PostgreSQL
+  db:
+    image: docker.io/library/postgres:16-alpine
+    container_name: obeshchanie-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oapv}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oapv_container_local}
+      POSTGRES_DB: ${POSTGRES_DB:-obeshchanie}
+      # Ускоряет инициализацию кластера на диске, оставшемся от прошлого запуска
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Порт 55432, чтобы не конфликтовать с локальным PostgreSQL в Windows
+    # (на машине заняты 5432 и 5433)
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-55432}:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-oapv} -d ${POSTGRES_DB:-obeshchanie}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    networks:
+      - obeshchanie
+
+  # ------------------------------------------------------- Миграции Alembic
+  # Одноразовый сервис: применить миграции и завершиться.
+  # Backend стартует только после его успешного завершения.
+  migrate:
+    build:
+      context: ./app
+      dockerfile: backend/Containerfile
+    image: obeshchanie/backend:local
+    container_name: obeshchanie-migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oapv}:${POSTGRES_PASSWORD:-oapv_container_local}@db:5432/${POSTGRES_DB:-obeshchanie}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      STORAGE_DIR: /srv/app/backend/var/storage
+      ENVIRONMENT: ${ENVIRONMENT:-container}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - obeshchanie
+
+  # ------------------------------------------------------------------ Backend
+  backend:
+    build:
+      context: ./app
+      dockerfile: backend/Containerfile
+    image: obeshchanie/backend:local
+    container_name: obeshchanie-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oapv}:${POSTGRES_PASSWORD:-oapv_container_local}@db:5432/${POSTGRES_DB:-obeshchanie}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      ENVIRONMENT: ${ENVIRONMENT:-container}
+      DEBUG: "false"
+      DATABASE_ECHO: "false"
+      STORAGE_DIR: /srv/app/backend/var/storage
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-10485760}
+      ALLOWED_UPLOAD_EXTENSIONS: ${ALLOWED_UPLOAD_EXTENSIONS:-.txt,.csv,.md,.pdf,.xlsx}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      DEMO_WORKSPACE_NAME: ${DEMO_WORKSPACE_NAME:-Демонстрационное пространство}
+      DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@local.test}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-demo12345}
+      # Провайдер ИИ по умолчанию локальный: внешние сервисы не требуются
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-90}
+      # Браузер заходит через frontend (nginx) на порту 8080 — тот же origin
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      TOKEN_TTL_HOURS: ${TOKEN_TTL_HOURS:-336}
+      RULES_VERSION: ${RULES_VERSION:-rules-2024.1}
+    volumes:
+      - storage:/srv/app/backend/var/storage
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 25s
+    networks:
+      - obeshchanie
+
+  # ----------------------------------------------------------------- Frontend
+  # Собранный Vite-бандл раздаёт nginx, /api проксируется на backend.
+  frontend:
+    build:
+      context: ./app
+      dockerfile: frontend/Containerfile
+    image: obeshchanie/frontend:local
+    container_name: obeshchanie-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - obeshchanie
+
+networks:
+  obeshchanie:
+    name: obeshchanie
+
+volumes:
+  # Данные контейнерной базы PostgreSQL переживают пересборку образов
+  pgdata:
+    name: obeshchanie-pgdata
+  # Загруженные пользователями файлы
+  storage:
+    name: obeshchanie-storage

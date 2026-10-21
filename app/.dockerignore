@@ -1,0 +1,28 @@
+# Контекст сборки образов backend и frontend — общая папка `app`.
+# Исключаем локальные артефакты, кэши и секреты: они не должны попадать в образ.
+
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+
+**/node_modules
+**/dist
+**/.vite
+**/*.tsbuildinfo
+
+# Загруженные пользователями файлы и логи
+backend/var
+backend/.env
+**/.env
+**/.env.*
+
+# Локальные виртуальные окружения
+**/.venv
+**/venv
+
+# Служебные файлы
+.DS_Store
+Thumbs.db

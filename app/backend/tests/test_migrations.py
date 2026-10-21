@@ -1,10 +1,10 @@
-"""Тесты миграций Alembic: чистая база, повторный прогон, сохранность данных."""
+﻿"""Тесты миграций Alembic: чистая база, повторный прогон, сохранность данных."""
 
 from __future__ import annotations
 
 from sqlalchemy import create_engine, text
 
-from tests.conftest import run_alembic
+from tests.conftest import TEST_DATABASE_URL, run_alembic
 
 TABLES = (
     "workspaces",
@@ -21,10 +21,10 @@ TABLES = (
 
 def test_migrations_create_all_tables():
     """Чистая база: после `upgrade head` все таблицы созданы."""
-    run_alembic(_TEST_URL, "downgrade", "base")
-    run_alembic(_TEST_URL, "upgrade", "head")
+    run_alembic(TEST_DATABASE_URL, "downgrade", "base")
+    run_alembic(TEST_DATABASE_URL, "upgrade", "head")
 
-    engine = create_engine(_TEST_URL, future=True)
+    engine = create_engine(TEST_DATABASE_URL, future=True)
     try:
         with engine.connect() as connection:
             for table in TABLES:
@@ -39,7 +39,7 @@ def test_migrations_create_all_tables():
 
 def test_repeated_upgrade_does_not_destroy_data():
     """Повторный прогон миграций не удаляет существующие данные."""
-    engine = create_engine(_TEST_URL, future=True)
+    engine = create_engine(TEST_DATABASE_URL, future=True)
     try:
         with engine.connect() as connection:
             connection.execute(
@@ -54,9 +54,9 @@ def test_repeated_upgrade_does_not_destroy_data():
     finally:
         engine.dispose()
 
-    run_alembic(_TEST_URL, "upgrade", "head")
+    run_alembic(TEST_DATABASE_URL, "upgrade", "head")
 
-    engine = create_engine(_TEST_URL, future=True)
+    engine = create_engine(TEST_DATABASE_URL, future=True)
     try:
         with engine.connect() as connection:
             count = connection.execute(
@@ -68,7 +68,7 @@ def test_repeated_upgrade_does_not_destroy_data():
 
 
 def test_alembic_version_is_tracked():
-    engine = create_engine(_TEST_URL, future=True)
+    engine = create_engine(TEST_DATABASE_URL, future=True)
     try:
         with engine.connect() as connection:
             version = connection.execute(
@@ -77,6 +77,3 @@ def test_alembic_version_is_tracked():
             assert version
     finally:
         engine.dispose()
-
-
-_TEST_URL = "postgresql+psycopg://oapv_app:oapv_local_dev@localhost:5432/obeshchanie_test"

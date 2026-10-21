@@ -1,0 +1,45 @@
+# Containerfile frontend «Обещание против реальности».
+#
+# Два этапа:
+#   1) node собирает production-бандл Vite (tsc -b && vite build);
+#   2) nginx раздаёт статику и проксирует /api на backend.
+#
+# Контекст сборки — папка `app` (общая с backend, чтобы .dockerignore был один).
+
+FROM docker.io/library/node:22-alpine AS build
+
+WORKDIR /build
+
+# Слой зависимостей отдельно: пересобирается только при изменении lock-файла
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+COPY frontend/ ./
+RUN npm run build
+
+
+# Необязательный этап с тестами фронтенда:
+#   podman build --target test -f app/frontend/Containerfile app
+FROM docker.io/library/node:22-alpine AS test
+
+WORKDIR /build
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm test
+
+
+FROM docker.io/library/nginx:1.27-alpine
+
+COPY frontend/nginx.conf /etc/nginx/templates/default.conf.template
+COPY frontend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+COPY --from=build /build/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=5 \
+    CMD wget --spider -q http://127.0.0.1/ || exit 1
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

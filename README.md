@@ -135,6 +135,21 @@ Vite проксирует `/api` на backend, поэтому CORS-пробле�
 
 Либо зарегистрируйте собственное рабочее пространство на вкладке «Регистрация».
 
+### Запуск через Podman (контейнеры)
+
+Полная инструкция — в [docs/PODMAN_SETUP.md](docs/PODMAN_SETUP.md).
+
+```powershell
+cd "D:\Control\Проект конкурса"
+podman compose up -d --build     # db + migrate + backend + frontend
+podman compose ps
+podman compose logs -f
+podman compose down
+```
+
+Интерфейс контейнерного стенда — <http://localhost:8080>, API — <http://localhost:8000>,
+PostgreSQL — <http://localhost:55432> (отдельная база, локальная не затрагивается).
+
 ---
 
 ## 5. Проверка работоспособности
