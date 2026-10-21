@@ -1,0 +1,20 @@
+# Зависимости backend «Обещание против реальности».
+# Версии зафиксированы для воспроизводимого локального запуска на Windows.
+
+fastapi==0.156.4
+uvicorn[standard]==0.54.0
+sqlalchemy==2.1.5
+alembic==1.20.0
+psycopg[binary]==3.3.6
+pydantic==2.14.1
+pydantic-settings==2.16.1
+python-multipart==0.0.32
+jinja2==3.1.6
+
+# Разбор источников (PDF с текстовым слоем, таблицы XLSX)
+pypdf==6.21.1
+openpyxl==3.1.5
+
+# Тесты
+pytest==9.1.1
+httpx==0.28.1
