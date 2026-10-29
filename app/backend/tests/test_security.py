@@ -216,6 +216,97 @@ class TestProviderFallback:
         assert payload["summary"]["findings_by_type"].get("direct_conflict") == 1
 
 
+class TestOllamaResponseProcessing:
+    """Тесты обработки ответов модели Ollama: валидация enum и лимитов."""
+
+    def test_parse_response_valid_json(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response(
+            '{"claims": [{"id": "c1", "claim_type": "warranty_or_service", '
+            '"confidence_label": "supported_by_provided_source", '
+            '"rationale": "подтверждено descripción"}]}'
+        )
+        assert len(suggestions) == 1
+        assert suggestions[0].claim_id == "c1"
+        assert suggestions[0].claim_type == "warranty_or_service"
+        assert suggestions[0].confidence_label == "supported_by_provided_source"
+        assert rejected == 0
+
+    def test_parse_response_invalid_claim_type_rejected(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response(
+            '{"claims": [{"id": "c1", "claim_type": "SPECIFIC_NUMBER", '
+            '"confidence_label": "supported_by_provided_source", '
+            '"rationale": "число"}]}'
+        )
+        assert len(suggestions) == 0
+        assert rejected == 1
+
+    def test_parse_response_invalid_confidence_label(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response(
+            '{"claims": [{"id": "c1", "claim_type": "warranty_or_service", '
+            '"confidence_label": "HIGH", "rationale": "высокая"}]}'
+        )
+        assert len(suggestions) == 1
+        assert suggestions[0].confidence_label == "needs_human_review"
+        assert rejected == 1
+
+    def test_parse_response_malformed_json(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response("not json at all")
+        assert len(suggestions) == 0
+        assert rejected == 0
+
+    def test_parse_response_missing_fields(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response(
+            '{"claims": [{"id": "c1"}]}'
+        )
+        assert len(suggestions) == 0
+        assert rejected == 1
+
+    def test_parse_response_empty_claims(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response('{"claims": []}')
+        assert len(suggestions) == 0
+        assert rejected == 0
+
+    def test_parse_response_mixed_valid_and_invalid(self):
+        from app.providers.ollama import OllamaProvider
+
+        provider = OllamaProvider()
+        suggestions, rejected = provider._parse_response(
+            '{"claims": ['
+            '{"id": "c1", "claim_type": "warranty_or_service", '
+            '"confidence_label": "supported_by_provided_source", '
+            '"rationale": "ок"}, '
+            '{"id": "c2", "claim_type": "INVALID_TYPE", '
+            '"confidence_label": "HIGH", '
+            '"rationale": "плохо"}, '
+            '{"id": "c3", "claim_type": "safety_or_health", '
+            '"confidence_label": "insufficient_evidence", '
+            '"rationale": "норм"}'
+            ']}'
+        )
+        assert len(suggestions) == 2
+        assert suggestions[0].claim_id == "c1"
+        assert suggestions[1].claim_id == "c3"
+        assert rejected == 1
+
+
 class TestFileSafety:
     def test_uploaded_file_is_not_executed(self, client, auth_headers, product):
         """Загруженный файл не исполняется и не влияет на сервер."""

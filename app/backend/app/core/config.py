@@ -75,6 +75,11 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 90.0
     llm_max_chars: int = 12000
 
+    # --- Ollama: локальные модели ---
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:3b"
+    ollama_timeout_seconds: float = 180.0
+
     # --- OpenRouter: бесплатные модели с открытым API ---
     # Ключ хранится как SecretStr: случайная печать или сериализация
     # настроек не покажут его содержимое.

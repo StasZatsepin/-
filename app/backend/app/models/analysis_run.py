@@ -25,7 +25,7 @@ class AnalysisRun(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     engine_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
     rules_version: Mapped[str] = mapped_column(String(60), default="", nullable=False)
     provider_name: Mapped[str] = mapped_column(String(60), default="mock", nullable=False)
-    provider_status: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    provider_status: Mapped[str] = mapped_column(Text, default="", nullable=False)
     triggered_by: Mapped[str] = mapped_column(String(255), default="", nullable=False)
 
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

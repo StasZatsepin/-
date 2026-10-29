@@ -1,0 +1,70 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node / Frontend ---
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# --- Локальная конфигурация и данные ---
+.env
+.env.local
+*.local
+
+# --- Хранилище загруженных файлов ---
+app/backend/var/
+var/
+*.db
+*.sqlite3
+
+# --- Отчёты и временные файлы ---
+/reports/
+/tmp/
+*.log
+
+# --- Контейнерный запуск (Podman) ---
+/backup/container/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# --- Git ---
+.git/
+.gitignore
+
+# --- Документация и скрипты (не нужны в образе) ---
+*.md
+!app/backend/app/reports/template.html
+scripts/
+docs/
+01_PRODUCT_BRIEF.md
+02_PRD.md
+03_ARCHITECTURE.md
+04_CLAIM_EVIDENCE_MODEL.md
+05_API_CONTRACT.md
+06_UX_FLOWS.md
+07_SECURITY_PRIVACY.md
+08_TEST_PLAN.md
+09_IMPLEMENTATION_PLAN.md
+10_AI_DEVELOPER_RULES.md
+11_MASTER_PROMPT.md
+IMPLEMENTATION_STATUS.md
+
+# --- Бэкапы ---
+backup/
+
+# --- Docker / Podman ---
+.dockerignore
+docker-compose*.yaml
+compose.yaml

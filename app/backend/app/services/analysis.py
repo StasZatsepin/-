@@ -504,7 +504,12 @@ def run_analysis(
         run.summary = {
             "product_name": product.name,
             "claims_total": len(claims),
+            "claims_sent_to_provider": provider_result.claims_sent,
+            "claims_not_classified_due_to_limit": max(
+                0, len(candidates) - provider_result.claims_sent
+            ),
             "claims_classified_by_provider": applied,
+            "claims_rejected_by_provider": provider_result.claims_rejected,
             "claims_extracted_by_provider": len(extracted_by_provider),
             "sources_total": len(all_sources),
             "findings_total": len(findings),

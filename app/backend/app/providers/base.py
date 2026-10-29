@@ -61,6 +61,8 @@ class ProviderResult:
     claim_suggestions: List[ClaimSuggestion] = field(default_factory=list)
     finding_suggestions: List[FindingSuggestion] = field(default_factory=list)
     used_external_service: bool = False
+    claims_rejected: int = 0
+    claims_sent: int = 0
 
 
 @dataclass

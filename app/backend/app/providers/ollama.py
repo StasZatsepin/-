@@ -46,9 +46,9 @@ class OllamaProvider(ClaimAnalysisProvider):
 
     def __init__(self, base_url: str | None = None, model: str | None = None) -> None:
         self.base_url = (
-            base_url or settings.llm_base_url or "http://127.0.0.1:11434"
+            base_url or settings.ollama_base_url or "http://localhost:11434"
         ).rstrip("/")
-        self.model = model or settings.llm_model or DEFAULT_MODEL
+        self.model = model or settings.ollama_model or DEFAULT_MODEL
 
     # --- служебное -----------------------------------------------------------
 
@@ -98,19 +98,44 @@ class OllamaProvider(ClaimAnalysisProvider):
             + '"rationale": "краткое объяснение на русском"}]}'
         )
 
-    def _parse_response(self, payload: str) -> List[ClaimSuggestion]:
+    def _parse_response(
+        self, payload: str
+    ) -> tuple[List[ClaimSuggestion], int]:
+        """Разбирает ответ модели.
+
+        Возвращает (список предложений, количество отвергнутых утверждений).
+        Утверждения с невалидными claim_type или confidence_label отвергаются
+        и не считаются достоверным результатом.
+        """
         suggestions: List[ClaimSuggestion] = []
+        rejected = 0
         try:
             data = json.loads(payload)
         except (ValueError, TypeError):
-            return suggestions
+            logger.warning("Ollama вернул невалидный JSON: %s", payload[:200])
+            return suggestions, 0
+        valid_claim_types = {ct.value for ct in ClaimType}
+        valid_confidence = {item.value for item in ConfidenceStatus}
         for item in data.get("claims", []) or []:
             claim_id = item.get("id")
             claim_type = item.get("claim_type")
-            if not claim_id or claim_type not in {ct.value for ct in ClaimType}:
+            if not claim_id or claim_type not in valid_claim_types:
+                logger.warning(
+                    "Ollama отверг claim %s: недопустимый claim_type=%r",
+                    claim_id,
+                    claim_type,
+                )
+                rejected += 1
                 continue
             confidence = str(item.get("confidence_label") or "")
-            if confidence not in {item.value for item in ConfidenceStatus}:
+            if confidence not in valid_confidence:
+                logger.warning(
+                    "Ollama вернул недопустимый confidence_label=%r для claim %s, "
+                    "установлен needs_human_review",
+                    confidence,
+                    claim_id,
+                )
+                rejected += 1
                 confidence = ConfidenceStatus.NEEDS_REVIEW.value
             suggestions.append(
                 ClaimSuggestion(
@@ -122,7 +147,7 @@ class OllamaProvider(ClaimAnalysisProvider):
                     model_version=self.model,
                 )
             )
-        return suggestions
+        return suggestions, rejected
 
     # --- публичное -----------------------------------------------------------
 
@@ -144,6 +169,14 @@ class OllamaProvider(ClaimAnalysisProvider):
             fallback_provider="mock",
         )
 
+    # Максимальное количество утверждений в одном запросе к Ollama,
+# чтобы не превышать таймаут модели на слабом железе (CPU).
+    MAX_CLAIMS_PER_BATCH = 3
+    # Общее число утверждений, которые отправляются в Ollama за один запуск.
+    # На CPU без GPU модель медленная (~100 сек на запрос), поэтому не
+    # стоит перегружать её всеми утверждениями сразу.
+    MAX_TOTAL_CLAIMS = 3
+
     def classify_claims(
         self, claims: List[ClaimCandidate], context: Dict[str, str]
     ) -> ProviderResult:
@@ -154,38 +187,74 @@ class OllamaProvider(ClaimAnalysisProvider):
                 status="ok",
                 message="Нет утверждений для классификации.",
             )
-        try:
-            response = httpx.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": self._build_prompt(claims, context),
-                    "system": SYSTEM_PROMPT,
-                    "stream": False,
-                    "format": "json",
-                    "options": {"temperature": 0},
-                },
-                timeout=settings.llm_timeout_seconds,
+        # Ограничиваем число утверждений, чтобы уложиться в таймаут.
+        claims_to_send = claims[: self.MAX_TOTAL_CLAIMS]
+        claims_not_sent = max(0, len(claims) - self.MAX_TOTAL_CLAIMS)
+        all_suggestions: List[ClaimSuggestion] = []
+        total_rejected = 0
+        total_batches = (
+            len(claims_to_send) + self.MAX_CLAIMS_PER_BATCH - 1
+        ) // self.MAX_CLAIMS_PER_BATCH
+        for batch_index in range(total_batches):
+            batch = claims_to_send[
+                batch_index * self.MAX_CLAIMS_PER_BATCH:
+                (batch_index + 1) * self.MAX_CLAIMS_PER_BATCH
+            ]
+            try:
+                response = httpx.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": self._build_prompt(batch, context),
+                        "system": SYSTEM_PROMPT,
+                        "stream": False,
+                        "format": "json",
+                        "options": {"temperature": 0},
+                    },
+                    timeout=settings.ollama_timeout_seconds,
+                )
+                response.raise_for_status()
+                raw = response.json().get("response", "")
+            except Exception as exc:
+                logger.warning(
+                    "Ollama недоступна (батч %d/%d): %s",
+                    batch_index + 1,
+                    total_batches,
+                    type(exc).__name__,
+                )
+                return ProviderResult(
+                    provider=self.name,
+                    model_version=self.model,
+                    status="unavailable",
+                    message=f"Локальная модель недоступна ({type(exc).__name__}). "
+                    "Детерминированные проверки продолжают работать.",
+                    claims_sent=len(claims_to_send),
+                    claims_rejected=total_rejected,
+                )
+
+            batch_suggestions, batch_rejected = self._parse_response(raw)
+            all_suggestions.extend(batch_suggestions)
+            total_rejected += batch_rejected
+
+        status = "ok" if all_suggestions else "empty"
+        message_parts = [f"Классифицировано утверждений: {len(all_suggestions)}."]
+        if total_rejected:
+            message_parts.append(
+                f"Отвергнуто невалидных ответов модели: {total_rejected}."
             )
-            response.raise_for_status()
-            raw = response.json().get("response", "")
-        except Exception as exc:
-            logger.warning("Ollama недоступна: %s", type(exc).__name__)
-            return ProviderResult(
-                provider=self.name,
-                model_version=self.model,
-                status="unavailable",
-                message=f"Локальная модель недоступна ({type(exc).__name__}). "
-                "Детерминированные проверки продолжают работать.",
+        if claims_not_sent:
+            message_parts.append(
+                f"Не отправлено в модель из-за лимита: {claims_not_sent}."
             )
 
-        suggestions = self._parse_response(raw)
         return ProviderResult(
             provider=self.name,
             model_version=self.model,
-            status="ok" if suggestions else "empty",
-            message=f"Классифицировано утверждений: {len(suggestions)}.",
-            claim_suggestions=suggestions,
+            status=status,
+            message=" ".join(message_parts),
+            claim_suggestions=all_suggestions,
             finding_suggestions=[],
             used_external_service=True,
+            claims_sent=len(claims_to_send),
+            claims_rejected=total_rejected,
         )
