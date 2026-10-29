@@ -18,8 +18,13 @@ import type {
   User,
 } from './types'
 
-const API_PREFIX = '/api/v1'
 const TOKEN_KEY = 'opr.token'
+
+// В продакшене (Render Static Site) API может быть на другом домене.
+// VITE_API_URL задаётся при сборке: например, https://backend.onrender.com/api
+// В разработке Vite проксирует /api на localhost:8000.
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+const API_PREFIX = API_BASE_URL ? `${API_BASE_URL}/api/v1` : '/api/v1'
 
 export class ApiError extends Error {
   code: string

@@ -150,6 +150,18 @@ export function SourcesTab({ productId }: SourcesTabProps) {
           </div>
         </div>
         <div className="panel-body">
+          <div className="alert alert-warn" style={{ marginBottom: 'var(--sp-4)' }}>
+            <span className="alert-icon">
+              <IconInfo size={16} />
+            </span>
+            <div>
+              <strong>Внимание:</strong> в публичной демоверсии загруженные файлы хранятся во
+              временном хранилище и <strong>будут удалены при перезапуске или обновлении
+              приложения</strong>. Для постоянного хранения подключите S3-совместимое
+              хранилище (Cloudflare R2, AWS S3 и т.п.).
+            </div>
+          </div>
+
           <div
             className={dragOver ? 'dropzone is-over' : 'dropzone'}
             role="button"

@@ -73,4 +73,8 @@ describe('Клиент API', () => {
     const [, options] = fetchMock.mock.calls[0]
     expect(options.headers.Authorization).toBeUndefined()
   })
+
+  it('reportUrl использует базовый префикс /api/v1', () => {
+    expect(api.reportUrl('prod-1', 'run-1')).toBe('/api/v1/products/prod-1/reports/run-1')
+  })
 })

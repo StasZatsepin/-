@@ -1,0 +1,142 @@
+# Render Blueprint для «Обещание против реальности»
+# Документация: https://render.com/docs/blueprint-spec
+#
+# Этот файл описывает два сервиса:
+# 1. frontend — Static Site (Vite + Nginx не нужен, Render раздаёт статику)
+# 2. backend  — Web Service (FastAPI + Uvicorn)
+#
+# PostgreSQL — Neon (внешний, не в этом blueprint).
+#
+# Переменные окружения с приставкой `sync: false` не синхронизируются автоматически
+# при обновлении blueprint — их нужно задать вручную на дашборде Render.
+#
+# Секреты (SECRET_KEY, DATABASE_URL) НЕ ПОМЕЩАТЬ в этот файл.
+# Задайте их в Settings → Environment на дашборде Render.
+
+services:
+  # ============================================================ Frontend
+  - type: web
+    name: obeshchanie-frontend
+    runtime: static
+    repo: https://github.com/StasZatsepin/-.git
+    branch: master
+    buildCommand: |
+      cd app/frontend
+      npm ci
+      npm run build
+    staticPublishPath: app/frontend/dist
+    pullRequestPreviewsEnabled: true
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+        # Задайте на дашборде: https://<backend>.onrender.com
+        # Пример: https://obeshchanie-backend.onrender.com
+        # Не включайте /api/v1 — код добавляет префикс автоматически.
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+  # ============================================================ Backend
+  - type: web
+    name: obeshchanie-backend
+    runtime: python
+    repo: https://github.com/StasZatsepin/-.git
+    branch: master
+    buildCommand: |
+      cd app/backend
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: |
+      cd /opt/render/project/src/app/backend
+      # Ждём готовности БД и применяем миграции перед стартом
+      ./wait-for-db.sh 60 2
+      alembic upgrade head
+      exec uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: ENVIRONMENT
+        value: "production"
+      - key: LLM_PROVIDER
+        value: "mock"
+      - key: DEMO_MODE
+        value: "true"
+      - key: DEMO_USER_EMAIL
+        value: "demo@local.test"
+      - key: DEMO_USER_PASSWORD
+        value: "demo12345"
+      - key: STORAGE_DIR
+        value: "/tmp/storage"
+      - key: CORS_ORIGINS
+        sync: false
+        # Задайте на дашборде: https://<frontend>.onrender.com
+        # Пример: https://obeshchanie-frontend.onrender.com
+      - key: SECRET_KEY
+        sync: false
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+        # Задайте на дашборде: pooled connection string от Neon
+        # Пример: postgresql://user:pass@ep-xxx-pooler.eu-central-1.aws.neon.tech/obeshchanie?sslmode=require
+      - key: OPENROUTER_API_KEY
+        sync: false
+        # Опционально, для резервного провайдера
+      - key: OPENROUTER_MODEL
+        sync: false
+      - key: OPENROUTER_BASE_URL
+        value: "https://openrouter.ai/api/v1"
+        sync: false
+      - key: OPENROUTER_TIMEOUT_SECONDS
+        value: "60"
+        sync: false
+      - key: OPENROUTER_MAX_RETRIES
+        value: "2"
+        sync: false
+      - key: OPENROUTER_RETRY_BACKOFF_SECONDS
+        value: "2"
+        sync: false
+      - key: OPENROUTER_MAX_TOKENS
+        value: "1500"
+        sync: false
+      - key: OPENROUTER_FALLBACK_MODELS
+        value: ""
+        sync: false
+      - key: OPENROUTER_HTTP_REFERER
+        sync: false
+      - key: OPENROUTER_APP_TITLE
+        value: "Obeshchanie protiv realnosti"
+        sync: false
+      - key: OLLAMA_BASE_URL
+        value: "http://localhost:11434"
+        sync: false
+      - key: OLLAMA_MODEL
+        value: "qwen2.5:3b"
+        sync: false
+      - key: OLLAMA_TIMEOUT_SECONDS
+        value: "300"
+        sync: false
+      - key: LLM_TIMEOUT_SECONDS
+        value: "90"
+        sync: false
+      - key: RULES_VERSION
+        value: "rules-2024.1"
+      - key: TOKEN_TTL_HOURS
+        value: "336"
+    healthCheckPath: /health
+    autoDeploy: true
+    # Render Free: 512 MB RAM, 0.1 CPU, спит через 15 мин неактивности
+    # Нет постоянного диска — загруженные файлы в /tmp/storage пропадут при редеплое
+
+# Примечание: PostgreSQL создаётся отдельно на Neon (https://neon.tech)
+# Connection string (pooled) добавляется в DATABASE_URL на дашборде Render.
+# Пример pooled URL:
+# postgresql://user:pass@ep-xxx-pooler.eu-central-1.aws.neon.tech/obeshchanie?sslmode=require
