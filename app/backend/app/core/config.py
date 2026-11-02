@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     """Настройки MVP. Все значения можно переопределить переменными окружения."""
 
     model_config = SettingsConfigDict(
-        env_file=PROJECT_ROOT / ".env",
+        env_file=[
+            PROJECT_ROOT / ".env",
+            PROJECT_ROOT / ".env.local",
+        ],
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
