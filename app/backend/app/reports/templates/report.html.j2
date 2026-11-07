@@ -112,9 +112,48 @@
   .kv dd { margin: 0; }
   ul { margin: 6px 0; padding-left: 20px; }
   footer { text-align: center; color: var(--text-3); font-size: 12px; padding: 18px 0 6px; }
+  .meta-line { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+  .nowrap { white-space: nowrap; }
+  .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 12px; word-break: break-all; }
+  td.nowrap, .kv dd.nowrap { font-variant-numeric: tabular-nums; }
+  .excerpt-source { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .excerpt-source .rel {
+    display: inline-block; padding: 0 8px; border-radius: 999px; background: var(--border);
+    color: var(--text-2); font-size: 11.5px; font-weight: 600;
+  }
+  .excerpt, .finding-body, td, .kv dd { overflow-wrap: anywhere; }
+  details.tech { margin-top: 10px; font-size: 12px; color: var(--text-3); }
+  details.tech summary { cursor: pointer; width: fit-content; }
+  details.tech p { margin: 6px 0 0; }
+  footer { line-height: 1.6; }
+
+  /* Телефоны: таблицы становятся карточками, ничего не режется и не требует горизонтальной прокрутки. */
+  @media (max-width: 640px) {
+    body { padding: 16px 12px 40px; }
+    header.card, section.card { padding: 18px 16px; border-radius: 12px; }
+    h1 { font-size: 22px; }
+    .kv { grid-template-columns: 1fr; gap: 2px 0; }
+    .kv dd { margin-bottom: 10px; }
+    table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+    table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    table.stack tr {
+      border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;
+      background: var(--surface);
+    }
+    table.stack td { border: 0; padding: 4px 0; }
+    table.stack td[data-label]::before {
+      content: attr(data-label); display: block; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3);
+    }
+    table.stack td.cell-main { font-weight: 600; padding-bottom: 6px; }
+    table.stack td[colspan] { padding: 4px 0; }
+    .finding { padding: 14px 14px; }
+  }
+
   @media print {
     body { background: #fff; padding: 0; }
     header.card, section.card, .finding { break-inside: avoid; }
+    details.tech { display: none; }
   }
 </style>
 </head>
@@ -123,9 +162,10 @@
 
   <header class="card">
     <h1>Отчёт по проверке карточки товара</h1>
-    <div class="muted">
-      Сформирован {{ generated_at }} · версия правил {{ run.rules_version if run else "—" }} ·
-      провайдер {{ run.provider_name if run else "—" }}
+    <div class="meta-line muted">
+      <span>Сформирован: {{ generated_at }}</span>
+      <span>Версия правил: {{ run.rules_version if run else "—" }}</span>
+      <span>Способ анализа: {{ provider_label }}</span>
     </div>
     <p class="disclaimer"><strong>Важно.</strong> {{ disclaimer }}</p>
   </header>
@@ -135,10 +175,10 @@
     <dl class="kv">
       <dt>Название</dt><dd>{{ product.name }}</dd>
       <dt>Категория</dt><dd>{{ product.category or "—" }}</dd>
-      <dt>Маркетплейс</dt><dd>{{ product.marketplace }}</dd>
+      <dt>Маркетплейс</dt><dd>{{ marketplace_label }}</dd>
       <dt>Артикул / SKU</dt><dd>{{ product.sku or "—" }}</dd>
       <dt>Дата анализа</dt>
-      <dd>
+      <dd class="nowrap">
         {% if run and run.finished_at %}
           {% if run.finished_at.hour == 0 and run.finished_at.minute == 0 %}
             {{ run.finished_at.strftime("%d.%m.%Y") }}
@@ -158,20 +198,20 @@
 
   <section class="card">
     <h2>Источники ({{ sources | length }})</h2>
-    <table>
+    <table class="stack">
       <thead><tr><th>Название</th><th>Тип</th><th>Дата</th><th>Загружен</th><th>Хеш</th><th>Разбор</th></tr></thead>
       <tbody>
       {% for source in sources %}
         <tr>
-          <td>
+          <td class="cell-main" data-label="Название">
             {{ source.name }}
             {% if source.is_demo %}<span class="badge badge-demo">демо</span>{% endif %}
           </td>
-          <td class="muted">{{ source.type }}</td>
-          <td class="muted">{{ source.date }}</td>
-          <td class="muted">{{ source.uploaded_at }}</td>
-          <td class="muted">{{ source.hash }}</td>
-          <td class="muted">
+          <td class="muted" data-label="Тип">{{ source.type }}</td>
+          <td class="muted nowrap" data-label="Дата">{{ source.date }}</td>
+          <td class="muted nowrap" data-label="Загружен">{{ source.uploaded_at }}</td>
+          <td class="muted mono" data-label="Хеш">{{ source.hash }}</td>
+          <td class="muted" data-label="Разбор">
             {{ source.extraction_status }}
             {% if source.extraction_note %}<br>{{ source.extraction_note }}{% endif %}
           </td>
@@ -185,18 +225,18 @@
 
   <section class="card">
     <h2>Утверждения ({{ claims | length }})</h2>
-    <table>
+    <table class="stack">
       <thead><tr><th>Текст утверждения</th><th>Тип</th><th>Источник</th><th>Статус оценки</th></tr></thead>
       <tbody>
       {% for claim in claims %}
         <tr>
-          <td>
+          <td class="cell-main" data-label="Утверждение">
             {{ claim.text }}
             {% if claim.confirmed %}<span class="badge badge-teal">подтверждено</span>{% endif %}
           </td>
-          <td class="muted">{{ claim.type }}</td>
-          <td class="muted">{{ claim.source }}</td>
-          <td class="muted">{{ claim.confidence_status }}</td>
+          <td class="muted" data-label="Тип">{{ claim.type }}</td>
+          <td class="muted" data-label="Источник">{{ claim.source }}</td>
+          <td class="muted" data-label="Статус оценки">{{ claim.confidence_status }}</td>
         </tr>
       {% else %}
         <tr><td colspan="4" class="muted">Утверждения не найдены.</td></tr>
@@ -214,7 +254,7 @@
           <span class="badge {% if finding.severity_raw == 'high' %}badge-danger{% elif finding.severity_raw == 'medium' %}badge-warn{% elif finding.severity_raw == 'low' %}badge-info{% endif %}">{{ finding.severity }}</span>
           <span class="badge badge-accent">{{ finding.type }}</span>
           <span class="badge">{{ finding.status }}</span>
-          <span class="muted small">{{ finding.rule }}</span>
+          <span class="muted small">Правило: {{ finding.rule_name }}</span>
         </div>
         <div class="finding-body">{{ finding.description }}</div>
         {% if finding.sources %}
@@ -222,7 +262,7 @@
           <div class="muted small">Основание вывода:</div>
           {% for ref in finding.sources %}
             <div class="excerpt">
-              <span class="excerpt-source">{{ ref.name }} · {{ ref.relation }}</span>
+              <span class="excerpt-source"><span class="excerpt-name">{{ ref.name }}</span> <span class="rel">{{ ref.relation }}</span></span>
               {{ ref.excerpt }}
             </div>
           {% endfor %}
@@ -234,6 +274,10 @@
         {% if finding.recommended_action %}
         <div class="note note-action"><strong>Рекомендуемое действие.</strong> {{ finding.recommended_action }}</div>
         {% endif %}
+        <details class="tech">
+          <summary>Техническая информация</summary>
+          <p>Идентификатор правила и версия: {{ finding.rule_technical }}</p>
+        </details>
       </div>
     {% else %}
       <p class="muted">Результатов нет: в предоставленных материалах расхождений не обнаружено либо проверка ещё не запускалась.</p>
@@ -242,16 +286,16 @@
 
   <section class="card">
     <h2>Решения пользователя ({{ decisions | length }})</h2>
-    <table>
+    <table class="stack">
       <thead><tr><th>Дата</th><th>Пользователь</th><th>Результат</th><th>Переход статуса</th><th>Комментарий</th></tr></thead>
       <tbody>
       {% for decision in decisions %}
         <tr>
-          <td class="muted">{{ decision.created_at }}</td>
-          <td class="muted">{{ decision.user }}</td>
-          <td>{{ decision.finding_title }}</td>
-          <td class="muted">{{ decision.previous }} → {{ decision.new }}</td>
-          <td class="muted">{{ decision.comment }}</td>
+          <td class="muted nowrap" data-label="Дата">{{ decision.created_at }}</td>
+          <td class="muted" data-label="Пользователь">{{ decision.user }}</td>
+          <td class="cell-main" data-label="Результат">{{ decision.finding_title }}</td>
+          <td class="muted" data-label="Переход статуса">{{ decision.previous }} → {{ decision.new }}</td>
+          <td class="muted" data-label="Комментарий">{{ decision.comment }}</td>
         </tr>
       {% else %}
         <tr><td colspan="5" class="muted">Решений пользователя пока нет.</td></tr>
@@ -272,7 +316,7 @@
     </ul>
   </section>
 
-  <footer>«Обещание против реальности» · {{ disclaimer }}</footer>
+  <footer><strong>«Обещание против реальности»</strong><br>{{ disclaimer }}</footer>
 </div>
 </body>
 </html>

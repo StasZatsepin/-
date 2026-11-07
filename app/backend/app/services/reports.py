@@ -10,6 +10,21 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.labels_ru import (
+    ANALYSIS_STATUS_LABELS,
+    CLAIM_TYPE_LABELS,
+    CONFIDENCE_STATUS_LABELS,
+    EVIDENCE_RELATION_LABELS,
+    EXTRACTION_STATUS_LABELS,
+    FINDING_STATUS_LABELS,
+    FINDING_TYPE_LABELS,
+    MARKETPLACE_LABELS,
+    PROVIDER_LABELS,
+    SEVERITY_LABELS,
+    SOURCE_TYPE_LABELS,
+    label_for,
+    rule_label,
+)
 from app.models.analysis_run import AnalysisRun
 from app.models.claim import Claim
 from app.models.finding import Finding
@@ -31,50 +46,18 @@ ENVIRONMENT = Environment(
     lstrip_blocks=True,
 )
 
-SEVERITY_LABELS = {
-    "info": "Информация",
-    "low": "Низкая",
-    "medium": "Средняя",
-    "high": "Высокая",
-}
 
-FINDING_TYPE_LABELS = {
-    "direct_conflict": "Прямое расхождение",
-    "missing_evidence": "Нет подтверждения",
-    "review_signal": "Сигнал из отзывов",
-    "ambiguous_claim": "Неоднозначное утверждение",
-    "document_scope_mismatch": "Область применения документа",
-    "needs_human_review": "Требуется проверка человеком",
-}
-
-STATUS_LABELS = {
-    "open": "Открыта",
-    "in_review": "На рассмотрении",
-    "resolved": "Решена",
-    "not_an_issue": "Не является проблемой",
-    "insufficient_data": "Недостаточно данных",
-}
-
-CLAIM_TYPE_LABELS = {
-    "numeric_performance": "Числовая характеристика",
-    "dimension_or_weight": "Размер или вес",
-    "compatibility": "Совместимость",
-    "material_or_composition": "Материал или состав",
-    "certification_or_compliance": "Сертификация",
-    "warranty_or_service": "Гарантия и сервис",
-    "safety_or_health": "Безопасность и здоровье",
-    "subjective_marketing": "Оценочный маркетинг",
-    "other": "Прочее",
-}
-
-
-def _format_date(value) -> str:
+def _format_date(value, with_time: bool = True) -> str:
+    """Дата для отчёта. Полночь (00:00) означает «время не задано» и не выводится."""
     if value is None:
         return "—"
     if isinstance(value, datetime):
         if value.tzinfo is None:
             value = value.replace(tzinfo=timezone.utc)
-        return value.astimezone(timezone.utc).strftime("%d.%m.%Y %H:%M")
+        value = value.astimezone(timezone.utc)
+        if with_time and (value.hour or value.minute):
+            return value.strftime("%d.%m.%Y %H:%M")
+        return value.strftime("%d.%m.%Y")
     return str(value)
 
 
@@ -106,84 +89,113 @@ def render_report(db: Session, product: Product, run: AnalysisRun) -> str:
             .order_by(ReviewAction.created_at.asc())
         ).scalars()
     )
+    context = build_report_context(product, run, sources, claims, findings, actions)
+    return ENVIRONMENT.get_template("report.html.j2").render(**context)
+
+
+def build_report_context(
+    product,
+    run,
+    sources: List,
+    claims: List,
+    findings: List,
+    actions: List,
+) -> Dict:
+    """Собирает данные для шаблона отчёта.
+
+    Функция не обращается к базе данных. Все коды (типы, статусы, отношения,
+    идентификаторы правил) переводятся в русские подписи через ``labels_ru``:
+    пользователь не должен видеть технических значений.
+    """
     source_names = {source.id: source.source_name for source in sources}
 
-    template = ENVIRONMENT.get_template("report.html.j2")
-    return template.render(
-        generated_at=_format_date(datetime.now(timezone.utc)),
-        disclaimer=DISCLAIMER,
-        product=product,
-        run=run,
-        sources=[
+    return {
+        "generated_at": _format_date(datetime.now(timezone.utc)),
+        "disclaimer": DISCLAIMER,
+        "product": product,
+        "marketplace_label": label_for(MARKETPLACE_LABELS, product.marketplace),
+        "run": run,
+        "provider_label": label_for(PROVIDER_LABELS, run.provider_name if run else None, "—"),
+        "analysis_status_label": label_for(
+            ANALYSIS_STATUS_LABELS, getattr(run, "status", None) if run else None, "—"
+        ),
+        "sources": [
             {
                 "name": source.source_name,
-                "type": source.source_type,
+                "type": label_for(SOURCE_TYPE_LABELS, source.source_type),
                 "date": _format_date(source.source_date),
                 "uploaded_at": _format_date(source.created_at),
                 "hash": source.content_hash[:16],
-                "extraction_status": source.extraction_status,
+                "extraction_status": label_for(EXTRACTION_STATUS_LABELS, source.extraction_status),
                 "extraction_note": source.extraction_note or "",
                 "size_bytes": source.size_bytes,
                 "is_demo": bool((source.metadata_json or {}).get("demo")),
             }
             for source in sources
         ],
-        claims=[
+        "claims": [
             {
                 "text": claim.text,
-                "type": CLAIM_TYPE_LABELS.get(claim.claim_type, claim.claim_type),
+                "type": label_for(CLAIM_TYPE_LABELS, claim.claim_type),
                 "source": source_names.get(claim.source_id, "Ручной ввод"),
-                "confidence": claim.confidence_label or "—",
-                "confidence_status": claim.confidence_status,
+                "confidence_status": label_for(
+                    CONFIDENCE_STATUS_LABELS, claim.confidence_status, "Нужна проверка человеком"
+                ),
                 "confirmed": claim.user_confirmed,
             }
             for claim in claims
             if not claim.is_rejected
         ],
-        findings=[
+        "findings": [
             {
                 "title": finding.title,
-                "type": FINDING_TYPE_LABELS.get(finding.finding_type, finding.finding_type),
+                "type": label_for(FINDING_TYPE_LABELS, finding.finding_type),
                 "type_raw": finding.finding_type,
-                "severity": SEVERITY_LABELS.get(finding.severity, finding.severity),
+                "severity": label_for(SEVERITY_LABELS, finding.severity),
                 "severity_raw": finding.severity,
-                "status": STATUS_LABELS.get(finding.status, finding.status),
+                "status": label_for(FINDING_STATUS_LABELS, finding.status),
                 "status_raw": finding.status,
                 "description": finding.description,
                 "limitations": finding.limitations,
                 "recommended_action": finding.recommended_action,
-                "confidence_status": finding.confidence_status,
-                "rule": f"{finding.rule_id} ({finding.rule_version})",
+                "confidence_status": label_for(
+                    CONFIDENCE_STATUS_LABELS, finding.confidence_status, "Нужна проверка человеком"
+                ),
+                "rule_name": rule_label(finding.rule_id),
+                # Технические данные: выводятся мелким шрифтом в самом конце находки.
+                "rule_technical": f"{finding.rule_id}, версия {finding.rule_version}",
                 "sources": [
                     {
                         "name": ref.get("source_name", ""),
                         "excerpt": ref.get("excerpt", ""),
-                        "relation": ref.get("relation", ""),
+                        "relation": label_for(
+                            EVIDENCE_RELATION_LABELS, ref.get("relation"), "связь не определена"
+                        ),
                     }
                     for ref in (finding.source_refs or [])
                 ],
             }
             for finding in findings
         ],
-        decisions=[
+        "decisions": [
             {
                 "created_at": _format_date(action.created_at),
                 "user": action.user_email,
-                "previous": STATUS_LABELS.get(action.previous_status or "", action.previous_status or "—"),
-                "new": STATUS_LABELS.get(action.new_status or "", action.new_status or "—"),
+                "previous": label_for(FINDING_STATUS_LABELS, action.previous_status, "—")
+                if action.previous_status
+                else "—",
+                "new": label_for(FINDING_STATUS_LABELS, action.new_status, "—")
+                if action.new_status
+                else "—",
                 "comment": action.comment,
                 "finding_title": next(
-                    (
-                        finding.title
-                        for finding in findings
-                        if finding.id == action.finding_id
-                    ),
+                    (finding.title for finding in findings if finding.id == action.finding_id),
                     "Находка",
                 ),
             }
             for action in actions
         ],
-        limitations=(run.limitations if run else [])
+        "limitations": (run.limitations if run else [])
         or ["Анализ выполнен по предоставленным материалам."],
-        summary=(run.summary if run else {}) or {},
-    )
+        "summary": (run.summary if run else {}) or {},
+    }

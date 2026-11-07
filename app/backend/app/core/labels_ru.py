@@ -1,26 +1,27 @@
 """Единый источник человекочитаемых подписей на русском языке.
 
-Все пользовательские строки, которые выводятся в интерфейсе и в отчётах,
-берутся отсюда. Сырые коды enum (например, technical_document, needs_human_review,
-contextualizes) не должны попадать к пользователю.
+Все пользовательские строки, которые выводятся в отчёте и в API-ответах для
+интерфейса, берутся отсюда. Сырые коды (technical_document, needs_human_review,
+contextualizes, claims.ambiguous_promise и т. п.) не должны попадать к пользователю.
+
+Модуль намеренно не импортирует ничего из приложения: он состоит только из
+словарей и функции ``label_for``, поэтому его безопасно использовать где угодно.
+Полноту подписей относительно перечислений проверяет ``tests/test_labels_ru.py``.
 """
 
 from __future__ import annotations
 
-from app.models.enums import (
-    AnalysisStatus,
-    ClaimType,
-    ClaimExtractionMethod,
-    ClaimExtractionStatus,
-    ConfidenceStatus,
-    EvidenceRelation,
-    EvidenceType,
-    ExtractionMethod,
-    ExtractionStatus,
-    FindingStatus,
-    FindingType,
-    SourceType,
-)
+# Подпись по умолчанию для неизвестного значения: лучше нейтральное слово, чем сырой код.
+UNKNOWN_LABEL = "Прочее"
+
+# --- Маркетплейсы ---
+
+MARKETPLACE_LABELS: dict[str, str] = {
+    "ozon": "Ozon",
+    "wildberries": "Wildberries",
+    "demo": "Демо",
+    "other": "Другой",
+}
 
 # --- Типы источников ---
 
@@ -33,6 +34,25 @@ SOURCE_TYPE_LABELS: dict[str, str] = {
     "other": "Прочее",
 }
 
+# --- Статусы разбора источника ---
+
+EXTRACTION_STATUS_LABELS: dict[str, str] = {
+    "pending": "Ожидает разбора",
+    "extracted": "Текст извлечён",
+    "needs_ocr": "Нужно распознавание текста (OCR)",
+    "empty": "Текста нет",
+    "failed": "Не удалось разобрать",
+}
+
+# --- Способы извлечения ---
+
+EXTRACTION_METHOD_LABELS: dict[str, str] = {
+    "manual": "Введено вручную",
+    "rule_based": "Правила",
+    "mock_provider": "Встроенные правила",
+    "llm_provider": "Языковая модель",
+    "seeded": "Демонстрационные данные",
+}
 
 # --- Типы утверждений ---
 
@@ -48,30 +68,10 @@ CLAIM_TYPE_LABELS: dict[str, str] = {
     "other": "Прочее",
 }
 
-# --- Статусы извлечения ---
-
-EXTRACTION_STATUS_LABELS: dict[str, str] = {
-    "pending": "В ожидании",
-    "extracted": "Извлечено",
-    "needs_ocr": "Нужен OCR",
-    "empty": "Пусто",
-    "failed": "Ошибка разбора",
-}
-
-# --- Методы извлечения ---
-
-EXTRACTION_METHOD_LABELS: dict[str, str] = {
-    "manual": "Введено вручную",
-    "rule_based": "Извлечено правилами",
-    "mock_provider": "Мок-провайдер",
-    "llm_provider": "Языковая модель",
-    "seeded": "Сидирование",
-}
-
-# --- Статусы уверенности ---
+# --- Статусы оценки (confidence_status / confidence_label) ---
 
 CONFIDENCE_STATUS_LABELS: dict[str, str] = {
-    "supported_by_provided_source": "Подтверждено предоставленным источником",
+    "supported_by_provided_source": "Есть подтверждение в предоставленных данных",
     "conflicting_sources": "Источники расходятся",
     "insufficient_evidence": "Недостаточно данных",
     "subjective_or_not_testable": "Нет объективного критерия",
@@ -89,38 +89,6 @@ FINDING_TYPE_LABELS: dict[str, str] = {
     "needs_human_review": "Нужна проверка человеком",
 }
 
-# --- Статусы находок ---
-
-FINDING_STATUS_LABELS: dict[str, str] = {
-    "open": "Открыта",
-    "in_review": "На рассмотрении",
-    "resolved": "Решена",
-    "not_an_issue": "Не проблема",
-    "insufficient_data": "Недостаточно данных",
-}
-
-# --- Типы отношений evidence ---
-
-EVIDENCE_RELATION_LABELS: dict[str, str] = {
-    "supports": "подтверждает",
-    "contradicts": "противоречит",
-    "contextualizes": "контекст",
-    "unrelated": "не связано",
-    "uncertain": "неопределённо",
-}
-
-# --- Названия правил (rule_id -> человеческое имя) ---
-
-RULE_NAMES: dict[str, str] = {
-    "numeric.direct_conflict": "Прямое числовое расхождение",
-    "internal_conflict": "Внутриконфликтное утверждение",
-    "ambiguous_claim": "Неоднозначное утверждение",
-    "missing_evidence": "Нет подтверждения",
-    "review_signal": "Сигнал из отзывов",
-    "document_scope_mismatch": "Несовпадение области документа",
-    "provider.suggestion": "Предложение модели",
-}
-
 # --- Серьёзность находок ---
 
 SEVERITY_LABELS: dict[str, str] = {
@@ -130,7 +98,7 @@ SEVERITY_LABELS: dict[str, str] = {
     "high": "Высокая",
 }
 
-# --- Статусы статусов находок ---
+# --- Статусы рассмотрения находок ---
 
 FINDING_STATUS_LABELS: dict[str, str] = {
     "open": "Открыта",
@@ -140,92 +108,74 @@ FINDING_STATUS_LABELS: dict[str, str] = {
     "insufficient_data": "Недостаточно данных",
 }
 
-# --- Статусы запуска анализа ---
+# --- Типы доказательств ---
+
+EVIDENCE_TYPE_LABELS: dict[str, str] = {
+    "attribute_value": "Значение из таблицы характеристик",
+    "document_statement": "Утверждение из документа",
+    "review_statement": "Фрагмент отзыва",
+    "description_text": "Текст описания",
+    "user_note": "Заметка",
+}
+
+# --- Отношение доказательства к утверждению ---
+
+EVIDENCE_RELATION_LABELS: dict[str, str] = {
+    "supports": "подтверждает",
+    "contradicts": "противоречит",
+    "contextualizes": "уточняет контекст",
+    "unrelated": "не связано",
+    "uncertain": "неопределённо",
+}
+
+# --- Статусы запуска проверки ---
 
 ANALYSIS_STATUS_LABELS: dict[str, str] = {
-    "pending": "В ожидании",
+    "pending": "Ожидает запуска",
     "running": "Выполняется",
     "completed": "Завершена",
-    "failed": "Ошибка",
+    "failed": "Завершилась ошибкой",
+}
+
+# --- Поставщики анализа ---
+
+PROVIDER_LABELS: dict[str, str] = {
+    "mock": "Встроенные правила (без языковой модели)",
+    "ollama": "Ollama (локальная модель)",
+    "openai_compatible": "OpenAI-совместимый сервис",
+    "openrouter": "OpenRouter",
+}
+
+# --- Названия правил (rule_id → понятное имя) ---
+# Ключи должны совпадать со значениями rule_id в rules/engine.py и services/analysis.py.
+
+RULE_NAMES: dict[str, str] = {
+    "numeric.attribute_comparison": "Сравнение описания с таблицей характеристик",
+    "numeric.internal_consistency": "Согласованность значений внутри источников",
+    "claims.ambiguous_promise": "Обещание без объективного критерия",
+    "claims.unclassified": "Тип утверждения не определён",
+    "evidence.missing_safety_confirmation": "Нет подтверждения заявления о безопасности",
+    "evidence.missing_confirmation": "Нет подтверждения в предоставленных материалах",
+    "reviews.negative_signal": "Негативный сигнал из отзывов",
+    "reviews.mixed_signal": "Отзывы расходятся во мнениях",
+    "reviews.numeric_mismatch": "Отзыв расходится с описанием по числу",
+    "documents.scope_mismatch": "Документ относится к другой модели или версии",
+    "documents.expired_or_soon": "Срок действия документа",
+    "provider.suggestion": "Предложение языковой модели",
 }
 
 
-def label_for(mapping: dict[str, str], key: str | None, default: str = "Прочее") -> str:
-    """Возвращает человекочитаемую подпись по ключу.
+def label_for(mapping: dict[str, str], key: object, default: str = UNKNOWN_LABEL) -> str:
+    """Подпись по ключу; для пустого или неизвестного значения возвращает ``default``.
 
-    Если ключа нет в словаре — возвращает значение по умолчанию
-    (обычно «Прочее»), а не сырой код.
+    Сырой код в интерфейс не отдаётся никогда.
     """
     if key is None:
         return default
-    return mapping.get(key, default)
+    value = getattr(key, "value", key)
+    return mapping.get(str(value), default)
 
 
-def all_claim_types_have_labels() -> bool:
-    """Проверяет, что все значения ClaimType имеют человеческие подписи."""
-    from app.models.enums import ClaimType
-
-    for claim_type in ClaimType:
-        if claim_type.value not in CLAIM_TYPE_LABELS:
-            return False
-    return True
-
-
-def all_finding_types_have_labels() -> bool:
-    """Проверяет, что все значения FindingType имеют человеческие подписи."""
-    from app.models.enums import FindingType
-
-    for finding_type in FindingType:
-        if finding_type.value not in FINDING_TYPE_LABELS:
-            return False
-    return True
-
-
-def all_source_types_have_labels() -> bool:
-    """Проверяет, что все значения SourceType имеют человеческие подписи."""
-    from app.models.enums import SourceType
-
-    for source_type in SourceType:
-        if source_type.value not in SOURCE_TYPE_LABELS:
-            return False
-    return True
-
-
-def all_confidence_statuses_have_labels() -> bool:
-    """Проверяет, что все значения ConfidenceStatus имеют человеческие подписи."""
-    from app.models.enums import ConfidenceStatus
-
-    for status in ConfidenceStatus:
-        if status.value not in CONFIDENCE_STATUS_LABELS:
-            return False
-    return True
-
-
-def all_evidence_types_have_labels() -> bool:
-    """Проверяет, что все значения EvidenceType имеют человеческие подписи."""
-    from app.models.enums import EvidenceType
-
-    for evidence_type in EvidenceType:
-        if evidence_type.value not in SOURCE_TYPE_LABELS:
-            return False
-    return True
-
-
-def all_relation_labels_have_labels() -> bool:
-    """Проверяет, что все значения EvidenceRelation имеют человеческие подписи."""
-    from app.models.enums import EvidenceRelation
-
-    for relation in EvidenceRelation:
-        if relation.value not in EVIDENCE_RELATION_LABELS:
-            return False
-    return True
-
-
-def all_finding_statuses_have_labels() -> bool:
-    """Проверяет, что все значения FindingStatus имеют человеческие подписи."""
-    from app.models.enums import FindingStatus
-
-    for status in FindingStatus:
-        if status.value not in FINDING_STATUS_LABELS:
-            return False
-    return True
+def rule_label(rule_id: str | None) -> str:
+    """Понятное имя правила; для неизвестного правила — нейтральная подпись."""
+    return label_for(RULE_NAMES, rule_id, "Автоматическая проверка")
