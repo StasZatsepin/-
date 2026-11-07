@@ -460,7 +460,7 @@ def build_ambiguous_findings(claims: Iterable) -> List[FindingDraft]:
                 severity=Severity.INFO.value,
                 title="Обещание сформулировано неопределённо",
                 description=(
-                    f"В тексте найдена формулировка «{marker}»: «{text}».\n"
+                    f"В тексте найдена формулировка «{marker}»: {_quote(text)}.\n"
                     "Такое утверждение не имеет объективного критерия проверки, "
                     "поэтому подтвердить или опровергнуть его по предоставленным данным нельзя."
                 ),
@@ -492,6 +492,20 @@ def _find_marker(text: str) -> Optional[str]:
     return find_ambiguous_marker(text)
 
 
+def _quote(text: object) -> str:
+    """Цитата в кавычках «ёлочках» без хвостовой точки: точка ставится после кавычки."""
+    cleaned = " ".join(str(text).split()).rstrip(" .;,!…")
+    return f"«{cleaned}»"
+
+
+def _value_note(text: object, value_text: str) -> str:
+    """Значение в скобках, только если его ещё нет в цитате (иначе получится дубль)."""
+    normalized = " ".join(str(text).split()).lower()
+    if value_text.strip().lower() in normalized:
+        return ""
+    return f" ({value_text})"
+
+
 def _source_name(claim) -> str:
     source = getattr(claim, "source", None)
     return getattr(source, "source_name", "Неизвестный источник") if source else "Неизвестный источник"
@@ -519,7 +533,7 @@ def build_missing_evidence_findings(
                     severity=Severity.MEDIUM.value,
                     title="Утверждение о безопасности требует проверки человеком",
                     description=(
-                        f"В описании товара есть утверждение: «{claim.text}».\n"
+                        f"В описании товара есть утверждение: {_quote(claim.text)}.\n"
                         "Подтверждающих документов по этому утверждению не предоставлено. "
                         "Такие заявления нельзя подтвердить или опровергнуть автоматически."
                     ),
@@ -555,7 +569,7 @@ def build_missing_evidence_findings(
                 severity=Severity.LOW.value,
                 title="Для утверждения не предоставлено подтверждение",
                 description=(
-                    f"Утверждение из описания товара: «{claim.text}».\n"
+                    f"Утверждение из описания товара: {_quote(claim.text)}.\n"
                     "В предоставленных материалах нет документа, подтверждающего это "
                     "утверждение. Проверка выполнена по доступным данным."
                 ),
@@ -604,7 +618,7 @@ def build_review_signal_findings(
                     severity=Severity.LOW.value,
                     title="Отзыв покупателя содержит возможное расхождение",
                     description=(
-                        f"Отзыв: «{claim.text}».\n"
+                        f"Отзыв: {_quote(claim.text)}.\n"
                         "В отзыве упоминается расхождение с ожиданиями покупателя. "
                         "Показан как пользовательский сигнал, а не как установленный факт."
                     ),
@@ -637,7 +651,7 @@ def build_review_signal_findings(
     if sentiments.get("negative") and sentiments.get("positive"):
         mixed = mixed or (sentiments["negative"][:3] + sentiments["positive"][:3])
     if mixed:
-        excerpts = "\n".join(f"— «{claim.text}»" for claim in mixed[:5])
+        excerpts = "\n".join(f"— {_quote(claim.text)}" for claim in mixed[:5])
         findings.append(
             FindingDraft(
                 finding_type=FindingType.REVIEW_SIGNAL.value,
@@ -698,10 +712,17 @@ def build_review_signal_findings(
                     severity=Severity.LOW.value,
                     title="Отзыв покупателя упоминает другое значение параметра",
                     description=(
-                        f"В отзыве указано: «{claim.text}» ({claim.numeric_value:g} "
-                        f"{unit_display(claim.numeric_unit or '')}).\n"
-                        f"В описании товара: «{comparable.text}» "
-                        f"({comparable.statement.describe()})."
+                        "В отзыве указано: "
+                        + _quote(claim.text)
+                        + _value_note(
+                            claim.text,
+                            f"{claim.numeric_value:g} {unit_display(claim.numeric_unit or '')}",
+                        )
+                        + ".\n"
+                        + "В описании товара: "
+                        + _quote(comparable.text)
+                        + _value_note(comparable.text, comparable.statement.describe())
+                        + "."
                     ),
                     claim_id=comparable.claim_id,
                     evidence=[
@@ -850,7 +871,7 @@ def build_unclassified_findings(claims: Iterable, relevant_source_types: Optiona
         ]
     if not unclassified:
         return []
-    excerpts = "\n".join(f"— «{claim.text}»" for claim in unclassified[:10])
+    excerpts = "\n".join(f"— {_quote(claim.text)}" for claim in unclassified[:10])
     return [
         FindingDraft(
             finding_type=FindingType.NEEDS_HUMAN_REVIEW.value,
