@@ -3,7 +3,7 @@
 #
 # Этот файл описывает два сервиса:
 # 1. frontend — Static Site (Vite + Nginx не нужен, Render раздаёт статику)
-# 2. backend  — Web Service (FastAPI + Uvicorn)
+# 2. backend  — Web Service (FastAPI + Uvicorn) на бесплатном тарифе
 #
 # PostgreSQL — Neon (внешний, не в этом blueprint).
 #
@@ -47,6 +47,7 @@ services:
   - type: web
     name: obeshchanie-backend
     runtime: python
+    plan: free
     repo: https://github.com/StasZatsepin/-.git
     branch: master
     buildCommand: |

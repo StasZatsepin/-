@@ -31,9 +31,17 @@ export function Layout() {
     setMenuOpen(false)
   }, [location.pathname])
 
+  function handleMenuToggle() {
+    setMenuOpen((prev) => !prev)
+  }
+
+  function handleMenuClose() {
+    setMenuOpen(false)
+  }
+
   function handleLogout() {
     logout()
-    navigate('/login', { replace: true })
+    navigate('/app', { replace: true })
   }
 
   const initials = (user?.display_name || user?.email || 'П')
@@ -46,15 +54,25 @@ export function Layout() {
         <div
           className="sidebar-backdrop"
           role="presentation"
-          onClick={() => setMenuOpen(false)}
+          onClick={handleMenuClose}
         />
       )}
 
       <aside className={menuOpen ? 'sidebar is-open' : 'sidebar'}>
-        <NavLink to="/app" className="sidebar-brand">
-          <LogoMark size={36} variant="dark" />
-          <LogoWordmark variant="dark" compact />
-        </NavLink>
+        <div className="sidebar-header">
+          <NavLink to="/app" className="sidebar-brand">
+            <LogoMark size={32} variant="dark" />
+            <LogoWordmark variant="dark" compact />
+          </NavLink>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm sidebar-close"
+            onClick={handleMenuClose}
+            aria-label="Закрыть навигацию"
+          >
+            <IconClose size={20} />
+          </button>
+        </div>
 
         <div>
           <div className="sidebar-section-label">Рабочее пространство</div>
@@ -106,18 +124,19 @@ export function Layout() {
       </aside>
 
       <div className="main">
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm mobile-nav-toggle"
-          style={{ position: 'fixed', top: 12, left: 12, zIndex: 50 }}
-          onClick={() => setMenuOpen((value) => !value)}
-          aria-label={menuOpen ? 'Закрыть меню' : 'Открыть меню'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <IconClose size={20} /> : <IconMenu size={20} />}
-        </button>
+        <header className="topbar">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm mobile-nav-toggle"
+            onClick={handleMenuToggle}
+            aria-label={menuOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? <IconClose size={20} /> : <IconMenu size={20} />}
+          </button>
 
-        <Outlet />
+          <Outlet />
+        </header>
       </div>
     </div>
   )

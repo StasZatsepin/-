@@ -36,7 +36,7 @@ export function ReportPage() {
           <h1>Отчёт по проверке</h1>
           <div className="topbar-subtitle">
             {run
-              ? `${run.product_name} · ${formatDate(run.finished_at ?? run.created_at)}`
+              ? `${run.product_name}, ${formatDate(run.finished_at ?? run.created_at)}`
               : 'Загрузка…'}
           </div>
         </div>

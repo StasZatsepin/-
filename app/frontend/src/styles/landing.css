@@ -616,6 +616,8 @@
   .hero-actions .btn,
   .finale-actions .btn {
     width: 100%;
+    min-height: 48px;
+    white-space: normal;
   }
 
   .demo-finding-body {

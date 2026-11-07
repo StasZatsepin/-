@@ -171,14 +171,15 @@
   display: block;
   font-size: 13.5px;
   color: var(--text-inverse);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .workspace-card span {
   font-size: 12px;
   color: var(--text-inverse-3);
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sidebar-user {
@@ -223,18 +224,16 @@
   display: block;
   font-size: 13px;
   color: var(--text-inverse);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sidebar-user-meta span {
   display: block;
   font-size: 11.5px;
   color: var(--text-inverse-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 /* --- Верхняя панель --- */
@@ -253,7 +252,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-8);
+  padding: var(--sp-4) var(--sp-6);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: saturate(160%) blur(10px);
   border-bottom: 1px solid var(--border);
@@ -261,6 +260,7 @@
 
 .topbar-titles {
   min-width: 0;
+  flex: 1;
 }
 
 .topbar h1 {
@@ -427,8 +427,9 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1.2;
+  min-height: 44px;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
   transition:
     background var(--dur-fast) var(--ease),
     border-color var(--dur-fast) var(--ease),
@@ -854,10 +855,24 @@ table.data tbody tr.is-clickable {
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  position: relative;
 }
 
 .tabs::-webkit-scrollbar {
   display: none;
+}
+
+.tabs::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(to right, var(--canvas), transparent);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .tab {
@@ -872,6 +887,8 @@ table.data tbody tr.is-clickable {
   cursor: pointer;
   white-space: nowrap;
   transition: color var(--dur-fast) var(--ease);
+  scroll-snap-align: start;
+  flex-shrink: 0;
 }
 
 .tab:hover {
@@ -1049,9 +1066,12 @@ table.data tbody tr.is-clickable {
 }
 
 .evidence-icon {
-  flex-shrink: 0;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
   color: var(--text-3);
-  margin-top: 2px;
+  display: grid;
+  place-items: center;
 }
 
 .evidence-source {
@@ -1431,14 +1451,19 @@ table.data tbody tr.is-clickable {
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
-    width: 280px;
+    width: min(86vw, 320px);
     transform: translateX(-100%);
-    transition: transform var(--dur) var(--ease);
-    box-shadow: var(--shadow-dark);
+    transition: transform var(--dur) var(--ease), visibility 0.2s ease;
+    visibility: hidden;
+    box-shadow: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .sidebar.is-open {
     transform: none;
+    visibility: visible;
+    box-shadow: var(--shadow-dark);
   }
 
   .sidebar-backdrop {
@@ -1447,6 +1472,15 @@ table.data tbody tr.is-clickable {
     background: rgba(12, 17, 23, 0.5);
     z-index: calc(var(--z-header) - 1);
     animation: fade-in var(--dur) var(--ease);
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s var(--dur), opacity var(--dur) var(--ease);
+  }
+
+  .sidebar.is-open ~ .sidebar-backdrop,
+  .sidebar-backdrop.is-open {
+    visibility: visible;
+    opacity: 1;
   }
 
   .mobile-nav-toggle {
@@ -1454,11 +1488,43 @@ table.data tbody tr.is-clickable {
   }
 
   .topbar {
-    padding: var(--sp-3) var(--sp-4) var(--sp-3) 56px;
+    padding: var(--sp-3) var(--sp-4);
   }
 
   .content {
     padding: var(--sp-4) var(--sp-4) var(--sp-12);
+  }
+
+  .topbar h1 {
+    font-size: 18px;
+  }
+
+  .panel-header,
+  .panel-body {
+    padding: var(--sp-4);
+  }
+
+  .finding-body {
+    padding: var(--sp-4);
+    flex-direction: column;
+  }
+
+  .finding-footer {
+    padding: var(--sp-4);
+  }
+
+  table.data th,
+  table.data td {
+    padding: 11px var(--sp-4);
+  }
+
+  .kv-list {
+    grid-template-columns: 1fr;
+    gap: 2px var(--sp-3);
+  }
+
+  .kv-list dd {
+    margin-bottom: var(--sp-3);
   }
 
   .topbar h1 {

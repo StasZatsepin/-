@@ -103,9 +103,13 @@ export function ProductPage() {
         <div className="topbar-titles">
           <h1>{product.name}</h1>
           <div className="topbar-subtitle">
-            {product.category || 'Категория не указана'} ·{' '}
-            {MARKETPLACE_LABELS[product.marketplace] ?? product.marketplace}
-            {product.sku ? ` · ${product.sku}` : ''}
+            {product.category || 'Категория не указана'}
+            {product.marketplace && (
+              <>
+                , {MARKETPLACE_LABELS[product.marketplace] ?? product.marketplace}
+              </>
+            )}
+            {product.sku ? `, артикул ${product.sku}` : ''}
           </div>
         </div>
         <div className="topbar-actions">

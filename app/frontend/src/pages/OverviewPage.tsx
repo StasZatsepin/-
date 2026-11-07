@@ -71,7 +71,7 @@ export function OverviewPage() {
         <div className="topbar-titles">
           <h1>Обзор</h1>
           <div className="topbar-subtitle">
-            {user?.workspace?.name} · проверки выполняются только по предоставленным материалам
+            {user?.workspace?.name} — проверки выполняются только по предоставленным материалам
           </div>
         </div>
         <div className="topbar-actions">
@@ -327,7 +327,7 @@ export function OverviewPage() {
                     onClick={() => void seedDemo()}
                     disabled={seeding}
                   >
-                    <IconQuote size={16} />
+                    <IconPlus size={16} />
                     {seeding ? 'Создаём…' : 'Добавить демо-товар'}
                   </button>
                 </div>

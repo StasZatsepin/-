@@ -123,7 +123,15 @@ export function SettingsPage() {
                       {settings.provider.available ? 'доступен' : 'недоступен'}
                     </span>
                   </dd>
-                  <dt>Требуется API-ключ</dt>
+                  <dt>Режим работы</dt>
+                  <dd>
+                    <span className={`badge ${settings.provider.name === 'mock' ? 'badge-info' : settings.provider.name === 'ollama' ? 'badge-warn' : 'badge-accent'}`}>
+                      {settings.provider.name === 'mock' ? 'Демо-режим: детерминированные правила, ИИ отключена'
+                        : settings.provider.name === 'ollama' ? 'Локальный Ollama (CPU, медленно)'
+                        : 'Внешний API'}
+                    </span>
+                  </dd>
+                  <dt>Передача данных наружу</dt>
                   <dd>{settings.provider.requires_api_key ? 'да' : 'нет'}</dd>
                   <dt>Передача данных наружу</dt>
                   <dd>
@@ -142,21 +150,27 @@ export function SettingsPage() {
                     Доступные провайдеры — переключаются переменной LLM_PROVIDER в файле .env:
                   </div>
                   <div className="chip-row">
-                    {settings.available_providers.map((item) => (
-                      <span
-                        key={item.name}
-                        className={
-                          item.name === settings.provider.name
-                            ? 'badge badge-accent'
-                            : 'badge badge-neutral'
-                        }
-                        title={item.hint}
-                      >
-                        {item.label}
-                        {item.requires_api_key ? ' · нужен ключ' : ''}
-                      </span>
-                    ))}
-                  </div>
+                    {settings.available_providers
+                      .filter((item) => !(settings.provider.name === 'mock' && item.name === 'ollama'))
+                      .map((item) => (
+                        <span
+                          key={item.name}
+                          className={
+                            item.name === settings.provider.name
+                              ? 'badge badge-accent'
+                              : 'badge badge-neutral'
+                          }
+                          title={item.hint}
+                        >
+                          {item.label}
+                          {item.requires_api_key && (
+                            <span className="badge badge-neutral" style={{ fontSize: 11, marginLeft: 6 }}>
+                              нужен ключ
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
                 </div>
               </div>
             </section>

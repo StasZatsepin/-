@@ -179,14 +179,14 @@ export function LandingPage() {
                 <i />
                 <i />
               </span>
-              <span className="demo-panel-title">Результат проверки · демонстрационный товар</span>
+              <span className="demo-panel-title">Результат проверки: демонстрационный товар</span>
             </div>
             <div className="demo-panel-body">
               <div className="demo-product">
                 <div className="demo-product-top">
                   <div>
                     <h3>ДЕМО: беспроводные наушники X-500</h3>
-                    <div className="demo-product-meta">Синтетические данные · версия правил rules-2024.1</div>
+                    <div className="demo-product-meta">Синтетические данные, версия правил rules-2024.1</div>
                   </div>
                   <span className="badge badge-violet">ДЕМО</span>
                 </div>

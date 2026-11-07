@@ -181,7 +181,7 @@ export function ProductsPage() {
                           </Link>
                           <div className="cell-sub">
                             {product.category || 'Категория не указана'}
-                            {product.sku ? ` · ${product.sku}` : ''}
+                            {product.sku ? `, артикул ${product.sku}` : ''}
                           </div>
                         </td>
                         <td>

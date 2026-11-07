@@ -145,17 +145,30 @@ export function formatCount(count: number, forms: [string, string, string]): str
   return `${count} ${plural(count, forms)}`
 }
 
-export function formatDate(value?: string | null): string {
+export function formatDate(value?: string | null, showTime = false): string {
   if (!value) return '—'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleString('ru-RU', {
+  const options: Intl.DateTimeFormatOptions = {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  }
+  if (showTime) {
+    options.hour = '2-digit'
+    options.minute = '2-digit'
+  } else if (date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0) {
+    // Пропускаем время, если оно ровно полночь — это бессмысленно
+    return date.toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  } else {
+    options.hour = '2-digit'
+    options.minute = '2-digit'
+  }
+  return date.toLocaleString('ru-RU', options)
 }
 
 export function formatDateOnly(value?: string | null): string {
