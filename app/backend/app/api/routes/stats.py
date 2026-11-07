@@ -158,6 +158,7 @@ def ai_settings(user: User = Depends(get_current_user)) -> dict:
             "allowed_extensions": settings.allowed_upload_extensions,
             "rules_version": settings.rules_version,
             "demo_mode": settings.demo_mode,
+            "store_original_files": settings.store_original_files,
         },
         "app": {
             "name": settings.app_name,

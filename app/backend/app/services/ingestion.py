@@ -270,8 +270,16 @@ def _extract_xlsx(content: bytes) -> ExtractedContent:
         )
 
 
-def store_file(product_id: str, suffix: str, content: bytes) -> str:
-    """Сохраняет файл под сгенерированным именем (исходное имя не используется)."""
+def store_file(product_id: str, suffix: str, content: bytes) -> Optional[str]:
+    """Сохраняет файл под сгенерированным именем (исходное имя не используется).
+
+    Если ``STORE_ORIGINAL_FILES=false`` (облачное демо с непостоянным диском), файл
+    на диск не пишется и возвращается ``None``: извлечённый текст, хеш и метаданные
+    всё равно сохраняются в базе, и анализ работает как обычно.
+    """
+    if not settings.store_original_files:
+        return None
+
     import uuid
 
     directory = settings.storage_dir / product_id
