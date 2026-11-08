@@ -121,6 +121,8 @@ function inPageChecks({ width, scrollY, rawSource, overlapMode }) {
       if (overlapW > 4 && overlapH > 4 && rect.bottom > 0 && rect.top < view.innerHeight) {
         // элемент под панелью, но панель сама по себе фон-подложка — допустимо только для backdrop
         if (fl.classList.contains('sidebar-backdrop')) continue
+        // нижняя навигация закрывает контент, пока страница не прокручена до конца: в режиме rest это нормально
+        if (fl.classList.contains('bottom-nav') && overlapMode === 'rest') continue
         // открытый мобильный sidebar перекрывает контент намеренно (overlay)
         if (fl.classList.contains('sidebar') && fl.classList.contains('is-open')) continue
         problems.push({ kind: 'overlap', where: label(fl), note: `перекрывает «${ownText(el).slice(0, 40)}» (${label(el)})` })

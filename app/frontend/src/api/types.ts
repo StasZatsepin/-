@@ -232,6 +232,7 @@ export interface AiSettings {
     allowed_extensions: string[]
     rules_version: string
     demo_mode: boolean
+    store_original_files?: boolean
   }
   app: {
     name: string

@@ -4,7 +4,6 @@ import { LogoMark, LogoWordmark } from '../components/Logo'
 import {
   IconArrowRight,
   IconChecks,
-  IconChevron,
   IconConflict,
   IconFile,
   IconInfo,
