@@ -35,6 +35,11 @@ const STATUS_OPTIONS: FindingStatus[] = [
  * Доказательства расходятся с утверждением не смешиваются: у каждого фрагмента
  * подписан источник и отношение к находке.
  */
+/** Схлопывает переносы и отступы из исходного файла: цитата показывается одной аккуратной строкой. */
+function normalizeExcerpt(text: string): string {
+  return (text ?? '').replace(/[\s\u00a0]+/g, ' ').trim()
+}
+
 export function FindingCard({ finding, onUpdated }: FindingCardProps) {
   const [status, setStatus] = useState<FindingStatus>(finding.status)
   const [comment, setComment] = useState('')
@@ -129,7 +134,7 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
                           {RELATION_LABELS[ref.relation] ?? ref.relation}
                         </span>
                       </div>
-                      <div className="evidence-excerpt">{ref.excerpt.trim()}</div>
+                      <div className="evidence-excerpt">{normalizeExcerpt(ref.excerpt)}</div>
                       {ref.note && <div className="evidence-note">{ref.note}</div>}
                     </div>
                   </div>
