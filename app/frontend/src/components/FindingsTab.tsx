@@ -30,6 +30,7 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
   const [typeFilter, setTypeFilter] = useState('')
   const [severityFilter, setSeverityFilter] = useState('')
   const [includeArchived, setIncludeArchived] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const params = useMemo(() => {
     const result: Record<string, string> = {}
@@ -78,7 +79,18 @@ export function FindingsTab({ productId, reloadKey }: FindingsTabProps) {
       <div className="panel-body" style={{ paddingBottom: 0 }}>
         {error && <ErrorMessage message={error} onRetry={() => void load()} />}
 
-        <div className="toolbar">
+        <button
+          type="button"
+          className="btn btn-sm filters-toggle"
+          aria-expanded={filtersOpen}
+          aria-controls="findings-filters"
+          onClick={() => setFiltersOpen((prev) => !prev)}
+        >
+          <IconFilter size={15} />
+          Фильтры{hasFilters ? ' (применены)' : ''}
+        </button>
+
+        <div id="findings-filters" className={filtersOpen ? 'toolbar findings-toolbar is-open' : 'toolbar findings-toolbar'}>
           <div className="field">
             <label htmlFor="filter-status" className="small">
               Статус

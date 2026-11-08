@@ -196,6 +196,12 @@ export function SettingsPage() {
                   <dd className="mono">{settings.limits.allowed_extensions.join(', ')}</dd>
                   <dt>Демо-режим</dt>
                   <dd>{settings.limits.demo_mode ? 'включён' : 'выключен'}</dd>
+                  <dt>Исходные файлы</dt>
+                  <dd>
+                    {settings.limits.store_original_files === false
+                      ? 'не сохраняются, хранится только извлечённый текст'
+                      : 'сохраняются на сервере'}
+                  </dd>
                 </dl>
               </div>
             </section>

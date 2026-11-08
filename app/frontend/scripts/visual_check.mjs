@@ -106,6 +106,8 @@ function inPageChecks({ width, scrollY, rawSource, overlapMode }) {
   // 3. Наложения: fixed/sticky элементы поверх текста
   const floating = all.filter((el) => ['fixed', 'sticky'].includes(view.getComputedStyle(el).position))
   for (const fl of floating) {
+    const flHead = fl.closest('thead')
+    if (flHead) { const hr = flHead.getBoundingClientRect(); if (hr.width <= 2 || hr.height <= 2) continue }
     const box = fl.getBoundingClientRect()
     if (box.width < 4 || box.height < 4) continue
     // «bottom»: после прокрутки в конец проверяем только панели, прижатые к низу экрана
@@ -116,11 +118,15 @@ function inPageChecks({ width, scrollY, rawSource, overlapMode }) {
       if (floating.some((other) => other !== fl && other.contains(el))) continue
       const rect = el.getBoundingClientRect()
       if (rect.width <= 2 || rect.height <= 2) continue // визуально скрытые элементы
+      const hiddenHead = el.closest('thead')
+      if (hiddenHead) { const hr = hiddenHead.getBoundingClientRect(); if (hr.width <= 2 || hr.height <= 2) continue }
       const overlapW = Math.min(box.right, rect.right) - Math.max(box.left, rect.left)
       const overlapH = Math.min(box.bottom, rect.bottom) - Math.max(box.top, rect.top)
       if (overlapW > 4 && overlapH > 4 && rect.bottom > 0 && rect.top < view.innerHeight) {
         // элемент под панелью, но панель сама по себе фон-подложка — допустимо только для backdrop
         if (fl.classList.contains('sidebar-backdrop')) continue
+        // нижняя навигация закрывает контент, пока страница не прокручена до конца: в режиме rest это нормально
+        if (fl.classList.contains('bottom-nav') && overlapMode === 'rest') continue
         // открытый мобильный sidebar перекрывает контент намеренно (overlay)
         if (fl.classList.contains('sidebar') && fl.classList.contains('is-open')) continue
         problems.push({ kind: 'overlap', where: label(fl), note: `перекрывает «${ownText(el).slice(0, 40)}» (${label(el)})` })

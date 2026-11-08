@@ -6,7 +6,7 @@ import { ClaimsTab } from '../components/ClaimsTab'
 import { EvidenceTab } from '../components/EvidenceTab'
 import { FindingsTab } from '../components/FindingsTab'
 import { SourcesTab } from '../components/SourcesTab'
-import { EmptyState, ErrorMessage, Loading } from '../components/States'
+import { EmptyState, ErrorMessage, Loading, Skeleton } from '../components/States'
 import { MARKETPLACE_LABELS, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
 import {
   IconChecks,
@@ -90,6 +90,7 @@ export function ProductPage() {
     return (
       <div className="content">
         <Loading label="Загружаем товар…" />
+        <Skeleton rows={4} />
       </div>
     )
   }

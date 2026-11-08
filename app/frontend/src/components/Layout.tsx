@@ -11,6 +11,7 @@ import {
   IconProducts,
   IconSettings,
 } from './icons'
+import { StorageBanner } from './StorageBanner'
 import { useAuth } from '../context/AuthContext'
 
 const NAV_ITEMS = [
@@ -162,8 +163,26 @@ export function Layout() {
           </NavLink>
         </div>
 
+        <StorageBanner />
         <Outlet />
       </div>
+
+      <nav className="bottom-nav" aria-label="Быстрая навигация">
+        {NAV_ITEMS.slice(0, 4).map((item) => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => (isActive ? 'bottom-nav-link active' : 'bottom-nav-link')}
+            >
+              <Icon size={20} />
+              <span>{item.label}</span>
+            </NavLink>
+          )
+        })}
+      </nav>
     </div>
   )
 }

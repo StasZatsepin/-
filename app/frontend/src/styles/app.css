@@ -1694,6 +1694,10 @@ table.data tbody tr.is-clickable {
 
 /* Таблицы-карточки на телефоне */
 @media (max-width: 640px) {
+  table.data.stack {
+    min-width: 0;
+  }
+
   table.data.stack,
   table.data.stack tbody,
   table.data.stack tr,
@@ -1713,6 +1717,8 @@ table.data tbody tr.is-clickable {
     border-bottom: 1px solid var(--border);
   }
   table.data.stack td {
+    padding-left: var(--sp-4);
+    padding-right: var(--sp-4);
     display: flex;
     justify-content: space-between;
     gap: var(--sp-3);
@@ -1736,5 +1742,107 @@ table.data tbody tr.is-clickable {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+  }
+}
+
+.storage-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: 10px 14px;
+  border: 1px solid var(--warn-border, #fedf89);
+  border-radius: var(--r-md);
+  background: var(--warn-soft, #fffaeb);
+  font-size: 13px;
+}
+
+.storage-banner-close {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -10px 0;
+  border: 0;
+  background: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-2);
+}
+
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-2);
+    text-decoration: none;
+  }
+
+  .bottom-nav-link.active {
+    color: var(--accent-700);
+    font-weight: 600;
+  }
+
+  .main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Фильтры за кнопкой на телефоне */
+.filters-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: var(--sp-3);
+  }
+
+  .findings-toolbar:not(.is-open) {
+    display: none;
+  }
+
+  .findings-toolbar .field,
+  .findings-toolbar .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    flex: none;
   }
 }
