@@ -106,6 +106,8 @@ function inPageChecks({ width, scrollY, rawSource, overlapMode }) {
   // 3. Наложения: fixed/sticky элементы поверх текста
   const floating = all.filter((el) => ['fixed', 'sticky'].includes(view.getComputedStyle(el).position))
   for (const fl of floating) {
+    const flHead = fl.closest('thead')
+    if (flHead) { const hr = flHead.getBoundingClientRect(); if (hr.width <= 2 || hr.height <= 2) continue }
     const box = fl.getBoundingClientRect()
     if (box.width < 4 || box.height < 4) continue
     // «bottom»: после прокрутки в конец проверяем только панели, прижатые к низу экрана
