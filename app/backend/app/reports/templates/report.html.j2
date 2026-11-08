@@ -100,6 +100,7 @@
     background: var(--surface-2); border-left: 3px solid var(--border-strong);
     border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 6px 0; font-size: 12.5px; white-space: pre-wrap;
   }
+  .excerpt { white-space: normal; }
   .excerpt-source { display: block; font-size: 11.5px; color: var(--text-3); margin-bottom: 3px; }
   .note {
     margin-top: 10px; padding: 10px 13px; border-radius: 8px;
@@ -264,7 +265,7 @@
           {% for ref in finding.sources %}
             <div class="excerpt">
               <span class="excerpt-source"><span class="excerpt-name">{{ ref.name }}</span> <span class="rel">{{ ref.relation }}</span></span>
-              {{ ref.excerpt }}
+              {{ (ref.excerpt or '')|trim|replace('\n', ' ') }}
             </div>
           {% endfor %}
         </div>
