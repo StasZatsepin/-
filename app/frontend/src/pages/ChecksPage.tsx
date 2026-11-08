@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { AnalysisRun } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from '../components/States'
-import { formatCount, formatDate } from '../components/labels'
+import { formatCount, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
 import { IconChecks, IconPrint } from '../components/icons'
 
 interface RunRow extends AnalysisRun {
@@ -117,10 +117,10 @@ export function ChecksPage() {
                       </td>
                       <td className="muted">{formatDate(run.created_at)}</td>
                       <td>
-                        <span className="badge badge-teal">{run.status}</span>
+                        <span className="badge badge-teal">{labelOf(RUN_STATUS_LABELS, run.status)}</span>
                       </td>
                       <td className="muted">{run.rules_version}</td>
-                      <td className="muted">{run.provider_name}</td>
+                      <td className="muted">{labelOf(PROVIDER_LABELS, run.provider_name)}</td>
                       <td>{String(run.summary?.sources_total ?? 0)}</td>
                       <td>{String(run.summary?.claims_total ?? 0)}</td>
                       <td>{String(run.summary?.findings_total ?? 0)}</td>

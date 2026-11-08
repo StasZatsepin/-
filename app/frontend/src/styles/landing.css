@@ -292,6 +292,12 @@
   gap: var(--sp-1);
   margin: var(--sp-4) 0;
   border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.demo-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .demo-tab {

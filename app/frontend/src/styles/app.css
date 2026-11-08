@@ -65,6 +65,8 @@
   align-items: center;
   gap: var(--sp-3);
   padding: 0 var(--sp-2);
+  min-height: 44px;
+  min-width: 44px;
   text-decoration: none;
 }
 
@@ -270,11 +272,16 @@
 }
 
 .topbar-subtitle {
-  margin-top: 2px;
+  margin-top: 4px;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+.topbar h1 {
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .topbar-actions {
@@ -291,8 +298,71 @@
   padding: var(--sp-6) var(--sp-8) var(--sp-16);
 }
 
-.mobile-nav-toggle {
+/* Мобильная панель приложения: в потоке страницы, на десктопе скрыта. */
+.mobile-bar {
   display: none;
+}
+
+.mobile-nav-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.mobile-nav-toggle:active {
+  background: var(--surface-2);
+}
+
+.mobile-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  min-height: 44px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.mobile-bar-brand span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.sidebar-close {
+  display: none;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-inverse-2);
+  cursor: pointer;
+}
+
+.sidebar-close:hover,
+.sidebar-close:active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-inverse);
 }
 
 /* --- Карточки и панели --- */
@@ -878,6 +948,7 @@ table.data tbody tr.is-clickable {
 .tab {
   position: relative;
   padding: 10px 14px;
+  min-height: 44px;
   border: none;
   background: none;
   font-family: var(--font-ui);
@@ -1006,6 +1077,13 @@ table.data tbody tr.is-clickable {
   flex-wrap: wrap;
   gap: 6px;
   margin: 10px 0 var(--sp-3);
+}
+
+.finding-meta .badge {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .finding-text {
@@ -1452,53 +1530,66 @@ table.data tbody tr.is-clickable {
     position: fixed;
     inset: 0 auto 0 0;
     width: min(86vw, 320px);
+    height: 100dvh;
+    padding-top: max(var(--sp-4), env(safe-area-inset-top));
+    padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom));
     transform: translateX(-100%);
-    transition: transform var(--dur) var(--ease), visibility 0.2s ease;
+    transition: transform var(--dur) var(--ease), visibility 0s linear var(--dur);
     visibility: hidden;
     box-shadow: none;
     overflow-y: auto;
     overscroll-behavior: contain;
+    z-index: var(--z-overlay);
   }
 
   .sidebar.is-open {
     transform: none;
     visibility: visible;
+    transition: transform var(--dur) var(--ease), visibility 0s;
     box-shadow: var(--shadow-dark);
+  }
+
+  .sidebar-close {
+    display: inline-grid;
   }
 
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
     background: rgba(12, 17, 23, 0.5);
-    z-index: calc(var(--z-header) - 1);
+    z-index: calc(var(--z-overlay) - 1);
     animation: fade-in var(--dur) var(--ease);
-    visibility: hidden;
-    opacity: 0;
-    transition: visibility 0s var(--dur), opacity var(--dur) var(--ease);
   }
 
-  .sidebar.is-open ~ .sidebar-backdrop,
-  .sidebar-backdrop.is-open {
-    visibility: visible;
-    opacity: 1;
+  .mobile-bar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 60px;
+    padding: var(--sp-2) max(var(--sp-4), env(safe-area-inset-right)) var(--sp-2)
+      max(var(--sp-4), env(safe-area-inset-left));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid var(--border);
   }
 
-  .mobile-nav-toggle {
-    display: inline-flex;
-  }
-
+  /* Заголовок страницы идёт сразу после мобильной панели и не липнет: на телефоне экран дорог. */
   .topbar {
-    padding: var(--sp-3) var(--sp-4);
+    position: static;
+    padding: var(--sp-4);
+  }
+
+  .topbar h1 {
+    font-size: 20px;
   }
 
   .content {
     padding: var(--sp-4) var(--sp-4) var(--sp-12);
   }
 
-  .topbar h1 {
-    font-size: 18px;
-  }
-
   .panel-header,
   .panel-body {
     padding: var(--sp-4);
@@ -1526,37 +1617,25 @@ table.data tbody tr.is-clickable {
   .kv-list dd {
     margin-bottom: var(--sp-3);
   }
+}
 
-  .topbar h1 {
-    font-size: 18px;
+/* Минимальный размер тач-целей на мобильных (≤480px) */
+@media (max-width: 480px) {
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'],
+  input[type='date'],
+  input[type='search'],
+  select {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 16px; /* предотвращает зум iOS */
   }
 
-  .panel-header,
-  .panel-body {
-    padding: var(--sp-4);
-  }
-
-  .finding-body {
-    padding: var(--sp-4);
-    flex-direction: column;
-  }
-
-  .finding-footer {
-    padding: var(--sp-4);
-  }
-
-  table.data th,
-  table.data td {
-    padding: 11px var(--sp-4);
-  }
-
-  .kv-list {
-    grid-template-columns: 1fr;
-    gap: 2px var(--sp-3);
-  }
-
-  .kv-list dd {
-    margin-bottom: var(--sp-3);
+  .btn {
+    min-height: 44px;
   }
 }
 

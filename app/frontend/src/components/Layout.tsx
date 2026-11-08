@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LogoMark, LogoWordmark } from './Logo'
 import {
@@ -26,10 +26,29 @@ export function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const toggleRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     setMenuOpen(false)
   }, [location.pathname])
+
+  // Пока меню открыто: Esc закрывает его, фон под панелью не прокручивается.
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        toggleRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
 
   function handleMenuToggle() {
     setMenuOpen((prev) => !prev)
@@ -37,6 +56,7 @@ export function Layout() {
 
   function handleMenuClose() {
     setMenuOpen(false)
+    toggleRef.current?.focus()
   }
 
   function handleLogout() {
@@ -58,7 +78,7 @@ export function Layout() {
         />
       )}
 
-      <aside className={menuOpen ? 'sidebar is-open' : 'sidebar'}>
+      <aside id="app-sidebar" className={menuOpen ? 'sidebar is-open' : 'sidebar'}>
         <div className="sidebar-header">
           <NavLink to="/app" className="sidebar-brand">
             <LogoMark size={32} variant="dark" />
@@ -66,7 +86,7 @@ export function Layout() {
           </NavLink>
           <button
             type="button"
-            className="btn btn-ghost btn-sm sidebar-close"
+            className="sidebar-close"
             onClick={handleMenuClose}
             aria-label="Закрыть навигацию"
           >
@@ -112,7 +132,7 @@ export function Layout() {
             <button
               type="button"
               className="btn btn-ghost btn-sm"
-              style={{ color: 'var(--text-inverse-2)', padding: 6 }}
+              style={{ color: 'var(--text-inverse-2)', padding: 10, minWidth: 44 }}
               onClick={handleLogout}
               aria-label="Выйти из рабочего пространства"
               title="Выйти"
@@ -124,19 +144,25 @@ export function Layout() {
       </aside>
 
       <div className="main">
-        <header className="topbar">
+        <div className="mobile-bar">
           <button
+            ref={toggleRef}
             type="button"
-            className="btn btn-ghost btn-sm mobile-nav-toggle"
+            className="mobile-nav-toggle"
             onClick={handleMenuToggle}
             aria-label={menuOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
             aria-expanded={menuOpen}
+            aria-controls="app-sidebar"
           >
-            {menuOpen ? <IconClose size={20} /> : <IconMenu size={20} />}
+            <IconMenu size={22} />
           </button>
+          <NavLink to="/app" className="mobile-bar-brand" aria-label="На главную страницу рабочего пространства">
+            <LogoMark size={28} />
+            <span>Обещание против реальности</span>
+          </NavLink>
+        </div>
 
-          <Outlet />
-        </header>
+        <Outlet />
       </div>
     </div>
   )

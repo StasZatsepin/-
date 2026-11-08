@@ -168,7 +168,7 @@ export function LandingPage() {
             </div>
             <p className="hero-note">
               <IconInfo size={15} />
-              Демо работает на синтетических данных. Внешние сервисы и платные API не нужны.
+              Демо работает на синтетических данных. Регистрация не нужна.
             </p>
           </div>
 
@@ -401,11 +401,8 @@ export function LandingPage() {
         <div className="landing-footer-inner">
           <span>«Обещание против реальности» — система доказательной проверки товарных утверждений.</span>
           <span className="chip-row">
-            <span className="badge badge-neutral">
-              <IconChevron size={12} />
-              Работает локально
-            </span>
-            <span className="badge badge-neutral">Без внешних API</span>
+            <span className="badge badge-neutral">Доказательный подход</span>
+            <span className="badge badge-neutral">Прозрачные источники</span>
           </span>
         </div>
       </footer>

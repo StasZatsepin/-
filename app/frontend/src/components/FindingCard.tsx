@@ -5,6 +5,8 @@ import {
   FINDING_TYPE_LABELS,
   FINDING_TYPE_META,
   RELATION_BADGE,
+  RULE_LABELS,
+  labelOf,
   RELATION_LABELS,
   SEVERITY_BADGE,
   SEVERITY_LABELS,
@@ -95,7 +97,9 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
               <TypeIcon size={13} />
               {FINDING_TYPE_LABELS[finding.finding_type]}
             </span>
-            <span className="badge badge-neutral">правило {finding.rule_id || finding.origin}</span>
+            <span className="badge badge-neutral" title={`Идентификатор правила: ${finding.rule_id}, версия ${finding.rule_version}`}>
+              {labelOf(RULE_LABELS, finding.rule_id, 'Автоматическая проверка')}
+            </span>
           </div>
 
           <p className="finding-text">{finding.description}</p>

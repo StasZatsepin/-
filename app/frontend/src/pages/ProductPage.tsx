@@ -7,7 +7,7 @@ import { EvidenceTab } from '../components/EvidenceTab'
 import { FindingsTab } from '../components/FindingsTab'
 import { SourcesTab } from '../components/SourcesTab'
 import { EmptyState, ErrorMessage, Loading } from '../components/States'
-import { MARKETPLACE_LABELS, formatDate } from '../components/labels'
+import { MARKETPLACE_LABELS, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
 import {
   IconChecks,
   IconEdit,
@@ -329,10 +329,10 @@ export function ProductPage() {
                       <tr key={run.id}>
                         <td className="muted">{formatDate(run.created_at)}</td>
                         <td>
-                          <span className="badge badge-teal">{run.status}</span>
+                          <span className="badge badge-teal">{labelOf(RUN_STATUS_LABELS, run.status)}</span>
                         </td>
                         <td className="muted">{run.rules_version}</td>
-                        <td className="muted">{run.provider_name}</td>
+                        <td className="muted">{labelOf(PROVIDER_LABELS, run.provider_name)}</td>
                         <td>{String(run.summary?.claims_total ?? 0)}</td>
                         <td>{String(run.summary?.findings_total ?? 0)}</td>
                         <td>

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { AiSettings } from '../api/types'
 import { ErrorMessage, Skeleton } from '../components/States'
-import { formatBytes } from '../components/labels'
+import { formatBytes, PROVIDER_LABELS, labelOf } from '../components/labels'
 import { IconInfo, IconProducts, IconQuote, IconShield, IconSpark } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 
@@ -112,7 +112,7 @@ export function SettingsPage() {
               <div className="panel-body">
                 <dl className="kv-list">
                   <dt>Провайдер</dt>
-                  <dd>{settings.provider.name}</dd>
+                  <dd>{labelOf(PROVIDER_LABELS, settings.provider.name)}</dd>
                   <dt>Модель / версия</dt>
                   <dd>{settings.provider.model || '—'}</dd>
                   <dt>Состояние</dt>

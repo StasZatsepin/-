@@ -40,8 +40,9 @@
     font-size: 14px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 940px; margin: 0 auto; }
+  .wrap { max-width: min(940px, 100%); margin: 0 auto; overflow-x: hidden; }
   header.card, section.card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -66,7 +67,7 @@
   }
   .disclaimer strong { color: var(--warn); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; white-space: normal; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
   thead th {
     background: var(--surface-2);
     color: var(--text-3);

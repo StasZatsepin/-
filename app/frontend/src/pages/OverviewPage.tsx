@@ -3,13 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import type { OverviewStats } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from '../components/States'
-import {
-  FINDING_TYPE_LABELS,
-  FINDING_TYPE_META,
-  SEVERITY_LABELS,
-  STATUS_LABELS,
-  formatDate,
-} from '../components/labels'
+import { FINDING_TYPE_LABELS, FINDING_TYPE_META, SEVERITY_LABELS, STATUS_LABELS, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
 import {
   IconArrowRight,
   IconChecks,
@@ -296,10 +290,10 @@ export function OverviewPage() {
                           </td>
                           <td className="muted">{formatDate(run.created_at)}</td>
                           <td>
-                            <span className="badge badge-teal">{run.status}</span>
+                            <span className="badge badge-teal">{labelOf(RUN_STATUS_LABELS, run.status)}</span>
                           </td>
                           <td className="muted">{run.rules_version}</td>
-                          <td className="muted">{run.provider_name}</td>
+                          <td className="muted">{labelOf(PROVIDER_LABELS, run.provider_name)}</td>
                           <td className="text-right">{String(run.summary?.findings_total ?? 0)}</td>
                         </tr>
                       ))}

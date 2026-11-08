@@ -129,6 +129,41 @@ export const MARKETPLACE_LABELS: Record<string, string> = {
   other: 'Другой',
 }
 
+export const RULE_LABELS: Record<string, string> = {
+  'numeric.attribute_comparison': 'Сравнение описания с таблицей характеристик',
+  'numeric.internal_consistency': 'Согласованность значений внутри источников',
+  'claims.ambiguous_promise': 'Обещание без объективного критерия',
+  'claims.unclassified': 'Тип утверждения не определён',
+  'evidence.missing_safety_confirmation': 'Нет подтверждения заявления о безопасности',
+  'evidence.missing_confirmation': 'Нет подтверждения в предоставленных материалах',
+  'reviews.negative_signal': 'Негативный сигнал из отзывов',
+  'reviews.mixed_signal': 'Отзывы расходятся во мнениях',
+  'reviews.numeric_mismatch': 'Отзыв расходится с описанием по числу',
+  'documents.scope_mismatch': 'Документ относится к другой модели или версии',
+  'documents.expired_or_soon': 'Срок действия документа',
+  'provider.suggestion': 'Предложение языковой модели',
+}
+
+export const RUN_STATUS_LABELS: Record<string, string> = {
+  pending: 'Ожидает запуска',
+  running: 'Выполняется',
+  completed: 'Завершена',
+  failed: 'Ошибка',
+}
+
+export const PROVIDER_LABELS: Record<string, string> = {
+  mock: 'Встроенные правила',
+  ollama: 'Ollama (локальная модель)',
+  openai_compatible: 'OpenAI-совместимый сервис',
+  openrouter: 'OpenRouter',
+}
+
+/** Подпись по ключу; сырой технический код пользователю не показываем. */
+export function labelOf(map: Record<string, string>, key: string | null | undefined, fallback = 'Прочее'): string {
+  if (!key) return fallback
+  return map[key] ?? fallback
+}
+
 /**
  * Русское склонение числительных: plural(5, ['карточка', 'карточки', 'карточек']).
  */
