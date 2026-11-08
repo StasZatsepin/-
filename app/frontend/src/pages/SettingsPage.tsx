@@ -4,7 +4,7 @@ import { api } from '../api/client'
 import type { AiSettings } from '../api/types'
 import { ErrorMessage, Skeleton } from '../components/States'
 import { formatBytes, PROVIDER_LABELS, labelOf } from '../components/labels'
-import { IconInfo, IconProducts, IconQuote, IconShield, IconSpark } from '../components/icons'
+import { IconInfo, IconProducts, IconQuote, IconShield } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 
 export function SettingsPage() {
@@ -126,28 +126,28 @@ export function SettingsPage() {
                   <dt>Режим работы</dt>
                   <dd>
                     <span className={`badge ${settings.provider.name === 'mock' ? 'badge-info' : settings.provider.name === 'ollama' ? 'badge-warn' : 'badge-accent'}`}>
-                      {settings.provider.name === 'mock' ? 'Демо-режим: детерминированные правила, ИИ отключена'
+                      {settings.provider.name === 'mock' ? 'Демо-режим: только правила, ИИ отключён'
                         : settings.provider.name === 'ollama' ? 'Локальный Ollama (CPU, медленно)'
                         : 'Внешний API'}
                     </span>
                   </dd>
-                  <dt>Передача данных наружу</dt>
+                  <dt>Нужен API-ключ</dt>
                   <dd>{settings.provider.requires_api_key ? 'да' : 'нет'}</dd>
                   <dt>Передача данных наружу</dt>
                   <dd>
                     {settings.provider.external_data_transfer
                       ? 'да — текст загруженных материалов будет передан внешнему сервису'
-                      : 'нет — материалы не покидают компьютер'}
+                      : 'нет — материалы не передаются сторонним сервисам'}
                   </dd>
                   <dt>Резервный режим</dt>
-                  <dd>{settings.provider.fallback}</dd>
+                  <dd>{labelOf(PROVIDER_LABELS, settings.provider.fallback)}</dd>
                   <dt>Сообщение</dt>
                   <dd>{settings.provider.message}</dd>
                 </dl>
 
                 <div style={{ marginTop: 'var(--sp-5)' }}>
                   <div className="small muted" style={{ marginBottom: 8 }}>
-                    Доступные провайдеры — переключаются переменной LLM_PROVIDER в файле .env:
+                    Доступные режимы анализа (выбирает администратор сервиса):
                   </div>
                   <div className="chip-row">
                     {settings.available_providers
@@ -235,46 +235,6 @@ export function SettingsPage() {
                     <IconShield size={16} />
                     На публичную страницу
                   </Link>
-                </div>
-              </div>
-            </section>
-
-            <section className="panel">
-              <div className="panel-header">
-                <div>
-                  <h2>Что делает модель, а что — правила</h2>
-                  <p>Ответственность разделена: числа, единицы, даты и модели проверяют правила</p>
-                </div>
-              </div>
-              <div className="panel-body">
-                <dl className="kv-list">
-                  <dt>Детерминированные правила</dt>
-                  <dd>
-                    Числовые расхождения, нормализация единиц измерения, даты документов, область
-                    применения, типы сигналов и их серьёзность.
-                  </dd>
-                  <dt>Модель</dt>
-                  <dd>
-                    Дополнительные формулировки утверждений, уточнение типа, пояснение к
-                    находке. Модель не может объявить факт доказанным: без дословного фрагмента
-                    источника её вывод отбрасывается.
-                  </dd>
-                  <dt>Если модель недоступна</dt>
-                  <dd>
-                    Анализ выполняется локальной эвристикой, в отчёте фиксируется, что внешний
-                    провайдер не использовался.
-                  </dd>
-                </dl>
-                <div className="alert alert-info" style={{ marginTop: 'var(--sp-4)', marginBottom: 0 }}>
-                  <span className="alert-icon">
-                    <IconSpark size={16} />
-                  </span>
-                  <div>
-                    Сравнить провайдеры на фиксированном наборе можно командой
-                    <span className="mono"> scripts\compare_providers.py</span>, а проверить
-                    доступность бесплатных моделей — командой
-                    <span className="mono"> scripts\check_openrouter_models.py</span>.
-                  </div>
                 </div>
               </div>
             </section>

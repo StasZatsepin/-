@@ -7,7 +7,7 @@ import { EvidenceTab } from '../components/EvidenceTab'
 import { FindingsTab } from '../components/FindingsTab'
 import { SourcesTab } from '../components/SourcesTab'
 import { EmptyState, ErrorMessage, Loading, Skeleton } from '../components/States'
-import { MARKETPLACE_LABELS, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
+import { MARKETPLACE_LABELS, attributeLabel, categoryLabel, formatDate, RUN_STATUS_LABELS, PROVIDER_LABELS, labelOf } from '../components/labels'
 import {
   IconChecks,
   IconEdit,
@@ -104,7 +104,7 @@ export function ProductPage() {
         <div className="topbar-titles">
           <h1>{product.name}</h1>
           <div className="topbar-subtitle">
-            {product.category || 'Категория не указана'}
+            {categoryLabel(product.category)}
             {product.marketplace && (
               <>
                 , {MARKETPLACE_LABELS[product.marketplace] ?? product.marketplace}
@@ -203,7 +203,7 @@ export function ProductPage() {
                   <dl className="kv-list">
                     {Object.entries(product.attributes ?? {}).map(([key, value]) => (
                       <div key={key} style={{ display: 'contents' }}>
-                        <dt className="mono">{key}</dt>
+                        <dt>{attributeLabel(key)}</dt>
                         <dd>{String(value)}</dd>
                       </div>
                     ))}

@@ -223,3 +223,66 @@ export function formatBytes(value?: number | null): string {
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} КБ`
   return `${(value / (1024 * 1024)).toFixed(1)} МБ`
 }
+
+/** Понятные названия типичных характеристик товара. Неизвестные ключи показываются как есть, без подчёркиваний. */
+export const ATTRIBUTE_LABELS: Record<string, string> = {
+  model: 'Модель',
+  brand: 'Бренд',
+  country: 'Страна производства',
+  material: 'Материал',
+  color: 'Цвет',
+  size: 'Размер',
+  weight_g: 'Масса, г',
+  weight_kg: 'Масса, кг',
+  warranty_months: 'Гарантия, мес.',
+  battery_life_hours: 'Время работы от батареи, ч',
+  battery_capacity_mah: 'Ёмкость батареи, мА·ч',
+  power_w: 'Мощность, Вт',
+  voltage_v: 'Напряжение, В',
+  volume_l: 'Объём, л',
+  volume_ml: 'Объём, мл',
+  height_mm: 'Высота, мм',
+  width_mm: 'Ширина, мм',
+  length_mm: 'Длина, мм',
+  depth_mm: 'Глубина, мм',
+  protection_class: 'Класс защиты',
+  water_resistance: 'Влагозащита',
+  connection: 'Тип подключения',
+  composition: 'Состав',
+  season: 'Сезон',
+  gender: 'Пол',
+}
+
+export function attributeLabel(key: string): string {
+  const known = ATTRIBUTE_LABELS[key.trim().toLowerCase()]
+  if (known) return known
+  const text = key.replace(/_/g, ' ').trim()
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : key
+}
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  electronics: 'Электроника',
+  clothing: 'Одежда',
+  shoes: 'Обувь',
+  home: 'Дом',
+  appliances: 'Бытовая техника',
+  beauty: 'Красота',
+  toys: 'Игрушки',
+  sports: 'Спорт',
+  auto: 'Авто',
+  books: 'Книги',
+  food: 'Продукты',
+  kids: 'Детские товары',
+}
+
+/** «electronics / наушники» → «Электроника / наушники». */
+export function categoryLabel(category: string | null | undefined): string {
+  if (!category) return 'Категория не указана'
+  return category
+    .split('/')
+    .map((part) => {
+      const trimmed = part.trim()
+      return CATEGORY_LABELS[trimmed.toLowerCase()] ?? trimmed
+    })
+    .join(' / ')
+}

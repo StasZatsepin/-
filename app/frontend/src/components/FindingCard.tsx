@@ -129,7 +129,7 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
                           {RELATION_LABELS[ref.relation] ?? ref.relation}
                         </span>
                       </div>
-                      <div className="evidence-excerpt">{ref.excerpt}</div>
+                      <div className="evidence-excerpt">{ref.excerpt.trim()}</div>
                       {ref.note && <div className="evidence-note">{ref.note}</div>}
                     </div>
                   </div>

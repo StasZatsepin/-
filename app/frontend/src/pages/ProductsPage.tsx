@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { ProductSummary } from '../api/types'
 import { EmptyState, ErrorMessage, Skeleton } from '../components/States'
-import { MARKETPLACE_LABELS, formatCount, formatDate } from '../components/labels'
+import { MARKETPLACE_LABELS, categoryLabel, formatCount, formatDate } from '../components/labels'
 import { IconEdit, IconPlus, IconSearch, IconTrash } from '../components/icons'
 
 type SortKey = 'name' | 'updated' | 'findings'
@@ -180,7 +180,7 @@ export function ProductsPage() {
                             {product.name}
                           </Link>
                           <div className="cell-sub">
-                            {product.category || 'Категория не указана'}
+                            {categoryLabel(product.category)}
                             {product.sku ? `, артикул ${product.sku}` : ''}
                           </div>
                         </td>
@@ -188,7 +188,7 @@ export function ProductsPage() {
                           <span className="badge badge-neutral">
                             {MARKETPLACE_LABELS[product.marketplace] ?? product.marketplace}
                           </span>
-                          {product.is_demo && (
+                          {product.is_demo && product.marketplace !== 'demo' && (
                             <span className="badge badge-violet" style={{ marginLeft: 6 }}>
                               демо
                             </span>

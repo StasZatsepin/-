@@ -35,7 +35,7 @@ class MockAnalysisProvider(ClaimAnalysisProvider):
             model_version="mock-rules-1",
             available=True,
             message=(
-                "Работает локальная эвристическая классификация. "
+                "Работает встроенная эвристическая классификация. "
                 "Внешние сервисы не используются, данные никуда не передаются."
             ),
             requires_api_key=False,

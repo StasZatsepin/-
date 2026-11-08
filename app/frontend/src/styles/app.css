@@ -1846,3 +1846,18 @@ table.data tbody tr.is-clickable {
     flex: none;
   }
 }
+
+.evidence-excerpt {
+  white-space: pre-line;
+}
+
+.kv-list dd .badge {
+  max-width: 100%;
+  white-space: normal;
+}
+
+@media (max-width: 640px) {
+  table.data.stack td {
+    align-items: center;
+  }
+}
