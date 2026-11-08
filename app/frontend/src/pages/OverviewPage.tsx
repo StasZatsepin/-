@@ -10,7 +10,6 @@ import {
   IconFile,
   IconPlus,
   IconProducts,
-  IconQuote,
 } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 
