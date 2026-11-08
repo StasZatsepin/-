@@ -12,7 +12,7 @@ describe('Публичная главная страница', () => {
     )
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Обещания товара. Проверка фактами.',
+      'Найдите расхождения в карточке до того, как их найдёт покупатель',
     )
     expect(screen.getAllByRole('link', { name: /Попробовать демо/ }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: /Как это работает/ }).length).toBeGreaterThan(0)
@@ -26,7 +26,7 @@ describe('Публичная главная страница', () => {
     )
 
     expect(
-      screen.getByText(/Сопоставляйте заявления продавцов с характеристиками/),
+      screen.getByText(/Система сверяет описание товара с характеристиками/),
     ).toBeInTheDocument()
   })
 

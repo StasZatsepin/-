@@ -265,7 +265,7 @@ export function OverviewPage() {
                 </div>
               ) : (
                 <div className="table-wrap">
-                  <table className="data">
+                  <table className="data stack">
                     <thead>
                       <tr>
                         <th>Товар</th>
@@ -279,7 +279,7 @@ export function OverviewPage() {
                     <tbody>
                       {stats.recent_runs.map((run) => (
                         <tr key={run.id}>
-                          <td>
+                          <td className="cell-main" data-label="Товар">
                             <Link
                               to={`/app/products/${run.product_id}`}
                               className="cell-title"
@@ -288,13 +288,13 @@ export function OverviewPage() {
                               {String(run.summary?.product_name ?? 'Товар')}
                             </Link>
                           </td>
-                          <td className="muted">{formatDate(run.created_at)}</td>
-                          <td>
+                          <td className="muted" data-label="Дата">{formatDate(run.created_at)}</td>
+                          <td data-label="Статус">
                             <span className="badge badge-teal">{labelOf(RUN_STATUS_LABELS, run.status)}</span>
                           </td>
-                          <td className="muted">{run.rules_version}</td>
-                          <td className="muted">{labelOf(PROVIDER_LABELS, run.provider_name)}</td>
-                          <td className="text-right">{String(run.summary?.findings_total ?? 0)}</td>
+                          <td className="muted" data-label="Правила">{run.rules_version}</td>
+                          <td className="muted" data-label="Провайдер">{labelOf(PROVIDER_LABELS, run.provider_name)}</td>
+                          <td className="text-right" data-label="Находок">{String(run.summary?.findings_total ?? 0)}</td>
                         </tr>
                       ))}
                     </tbody>

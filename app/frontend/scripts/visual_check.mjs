@@ -115,6 +115,7 @@ function inPageChecks({ width, scrollY, rawSource, overlapMode }) {
       if (fl.contains(el) || el.contains(fl)) continue
       if (floating.some((other) => other !== fl && other.contains(el))) continue
       const rect = el.getBoundingClientRect()
+      if (rect.width <= 2 || rect.height <= 2) continue // визуально скрытые элементы
       const overlapW = Math.min(box.right, rect.right) - Math.max(box.left, rect.left)
       const overlapH = Math.min(box.bottom, rect.bottom) - Math.max(box.top, rect.top)
       if (overlapW > 4 && overlapH > 4 && rect.bottom > 0 && rect.top < view.innerHeight) {

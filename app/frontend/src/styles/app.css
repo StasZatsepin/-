@@ -1691,3 +1691,50 @@ table.data tbody tr.is-clickable {
     max-width: 100%;
   }
 }
+
+/* Таблицы-карточки на телефоне */
+@media (max-width: 640px) {
+  table.data.stack,
+  table.data.stack tbody,
+  table.data.stack tr,
+  table.data.stack td {
+    display: block;
+    width: 100%;
+  }
+  table.data.stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  table.data.stack tr {
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--border);
+  }
+  table.data.stack td {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 4px 0;
+    border: 0;
+    text-align: right;
+  }
+  table.data.stack td[data-label]::before {
+    content: attr(data-label);
+    color: var(--text-3);
+    font-size: 12px;
+    text-align: left;
+  }
+  table.data.stack td.cell-main {
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 640px) {
+  table.data.stack td.cell-main a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
