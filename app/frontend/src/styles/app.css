@@ -1810,3 +1810,39 @@ table.data tbody tr.is-clickable {
     padding-bottom: calc(72px + env(safe-area-inset-bottom));
   }
 }
+
+/* Фильтры за кнопкой на телефоне */
+.filters-toggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: var(--sp-3);
+  }
+
+  .findings-toolbar:not(.is-open) {
+    display: none;
+  }
+
+  .findings-toolbar .field,
+  .findings-toolbar .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    flex: none;
+  }
+}
