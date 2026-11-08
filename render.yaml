@@ -77,6 +77,9 @@ services:
         value: "demo12345"
       - key: STORAGE_DIR
         value: "/tmp/storage"
+      - key: STORE_ORIGINAL_FILES
+        value: "false"
+        # Диск на бесплатном тарифе временный: оригиналы не храним, текст хранится в БД.
       - key: CORS_ORIGINS
         sync: false
         # Задайте на дашборде: https://<frontend>.onrender.com
