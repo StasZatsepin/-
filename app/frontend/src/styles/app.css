@@ -1869,3 +1869,9 @@ table.data tbody tr.is-clickable {
 
 .callout-fix { border-left: 3px solid var(--success, #16a34a); }
 .suggestion-copy { margin-top: 8px; }
+
+.empty-illustration { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .empty-lens { animation: lens-move 4s ease-in-out infinite; }
+  @keyframes lens-move { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-22px,-10px); } }
+}
