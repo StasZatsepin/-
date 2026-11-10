@@ -13,6 +13,7 @@ import {
   STATUS_BADGE,
   STATUS_LABELS,
 } from './labels'
+import { SuggestionBlock } from './SuggestionBlock'
 import { IconCheck, IconFile, IconInfo, IconQuote, IconScale, IconSpark } from './icons'
 
 interface FindingCardProps {
@@ -174,6 +175,12 @@ export function FindingCard({ finding, onUpdated }: FindingCardProps) {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {finding.suggestion?.text && (
+            <div className="finding-section">
+              <SuggestionBlock text={finding.suggestion.text} copyText={finding.suggestion.copy_text} />
             </div>
           )}
 

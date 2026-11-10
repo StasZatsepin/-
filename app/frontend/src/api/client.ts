@@ -129,6 +129,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const api = {
+  quickCheck: (payload: import('./types').QuickCheckPayload) =>
+    request<import('./types').QuickCheckResult>('/public/quick-check', { method: 'POST', body: payload }),
   // --- авторизация ---
   login: (email: string, password: string) =>
     request<TokenResponse>('/auth/login', { method: 'POST', body: { email, password } }),

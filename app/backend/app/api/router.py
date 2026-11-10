@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.routes import analysis, auth, findings, products, reports, sources, stats
+from app.api.routes import analysis, auth, findings, products, public, reports, sources, stats
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -12,5 +12,6 @@ api_router.include_router(analysis.router)
 api_router.include_router(findings.router)
 api_router.include_router(reports.router)
 api_router.include_router(stats.router)
+api_router.include_router(public.router)
 
 __all__ = ["api_router"]

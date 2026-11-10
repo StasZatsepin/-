@@ -5,9 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import FindingStatus, FindingType, Severity
+from app.rules.suggestions import suggest_fix
 
 
 class ClaimOut(BaseModel):
@@ -113,8 +114,15 @@ class FindingOut(BaseModel):
     archived: bool
     explanation: str = ""
     explanation_provider: str = ""
+    suggestion: Optional[Dict[str, str]] = None
     created_at: datetime
     updated_at: datetime
+
+    @model_validator(mode="after")
+    def _fill_suggestion(self) -> "FindingOut":
+        if self.suggestion is None:
+            self.suggestion = suggest_fix(self.rule_id, self.description, self.recommended_action)
+        return self
 
 
 class FindingUpdate(BaseModel):

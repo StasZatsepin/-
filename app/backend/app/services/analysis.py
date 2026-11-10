@@ -324,9 +324,13 @@ def _persist_findings(
 
 
 def run_analysis(
-    db: Session, product: Product, user_email: str = ""
+    db: Session, product: Product, user_email: str = "", provider=None
 ) -> AnalysisRun:
-    """Выполняет полный анализ товара и сохраняет результаты."""
+    """Выполняет полный анализ товара и сохраняет результаты.
+
+    `provider` позволяет явно задать провайдера (публичная быстрая проверка всегда
+    использует встроенные правила и не передаёт текст внешним сервисам).
+    """
     run = AnalysisRun(
         product_id=product.id,
         workspace_id=product.workspace_id,
@@ -364,7 +368,7 @@ def run_analysis(
         source_by_id = {source.id: source for source in all_sources}
 
         # --- классификация через провайдера (по умолчанию локальная эвристика) ---
-        provider = get_provider()
+        provider = provider or get_provider()
         candidates: List[ClaimCandidate] = []
         for claim in claims:
             if claim.claim_type != ClaimType.OTHER.value:

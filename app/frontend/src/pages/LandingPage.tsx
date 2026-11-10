@@ -16,6 +16,7 @@ import {
   IconShield,
   IconSpark,
 } from '../components/icons'
+import { QuickCheck } from '../components/QuickCheck'
 import { useReveal } from '../hooks/useReveal'
 
 const STEPS = [
@@ -281,6 +282,20 @@ export function LandingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ---------------- Быстрая проверка ---------------- */}
+      <section className="landing-section" id="try">
+        <div className="landing-container quick-wrap">
+          <RevealBlock>
+            <span className="eyebrow">Без регистрации</span>
+            <h2 className="section-title">Проверьте карточку за 10 секунд</h2>
+            <p className="section-lead">
+              Вставьте описание и характеристики — получите расхождения и готовые формулировки, что исправить.
+            </p>
+          </RevealBlock>
+          <QuickCheck />
         </div>
       </section>
 

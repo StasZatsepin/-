@@ -155,8 +155,37 @@ export interface Finding {
   archived: boolean
   explanation: string
   explanation_provider: string
+  suggestion?: { text: string; copy_text?: string } | null
   created_at: string
   updated_at: string
+}
+
+export interface QuickCheckPayload {
+  description: string
+  name?: string
+  attributes_text: string
+  document_text?: string
+  reviews_text?: string
+}
+
+export interface QuickFinding {
+  finding_type: FindingType
+  severity: Severity
+  title: string
+  description: string
+  source_refs: SourceRef[]
+  limitations: string
+  recommended_action: string
+  rule_id: string
+  suggestion?: { text: string; copy_text?: string } | null
+}
+
+export interface QuickCheckResult {
+  findings: QuickFinding[]
+  total: number
+  by_severity: Record<string, number>
+  claims_count: number
+  note: string
 }
 
 export interface ReviewAction {

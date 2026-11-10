@@ -653,3 +653,21 @@
     display: none;
   }
 }
+
+/* ---- Быстрая проверка ---- */
+.quick-wrap { max-width: 760px; }
+.quick-form { display: grid; gap: var(--sp-4); margin-top: var(--sp-6); }
+.quick-form textarea { width: 100%; resize: vertical; font: inherit; }
+.quick-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+.quick-result { display: grid; gap: var(--sp-4); margin-top: var(--sp-4); }
+.quick-source { margin: 0; padding: var(--sp-4); border-left: 3px solid var(--border-strong, #ccc); white-space: pre-wrap; overflow-wrap: anywhere; }
+.quick-source mark { background: #fde68a; color: inherit; padding: 0 2px; border-radius: 3px; }
+.quick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-4); }
+.quick-item { padding: var(--sp-4); border: 1px solid var(--border, #ddd); border-radius: 12px; display: grid; gap: var(--sp-3); }
+.suggestion-copy { margin-top: var(--sp-2); }
+.callout-fix { border-color: var(--success, #16a34a); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .quick-item, .quick-source { animation: qc-in 0.35s ease both; }
+  @keyframes qc-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}

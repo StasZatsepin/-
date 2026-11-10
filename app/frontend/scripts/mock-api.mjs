@@ -291,6 +291,17 @@ export async function installMockApi(context, options = {}) {
 
     if (delay && !path.startsWith('/auth')) await new Promise((resolve) => setTimeout(resolve, delay))
 
+    if (path === '/public/quick-check' && method === 'POST')
+      return json({
+        total: 1, claims_count: 2, by_severity: { high: 1 }, note: '',
+        findings: [{
+          finding_type: 'conflict', severity: 'high', title: 'Числовое расхождение',
+          description: 'В описании: «до 48 часов». В таблице характеристик: Время работы = 30 ч.',
+          source_refs: [{ source_id: null, source_name: 'Описание', excerpt: 'до 48 часов', relation: 'contradicts', evidence_type: 'text', note: '' }],
+          limitations: '', recommended_action: '', rule_id: 'numeric.attribute_comparison',
+          suggestion: { text: 'Если верна таблица характеристик, замените «до 48 часов» на «Время работы — 30 ч».', copy_text: 'Время работы — 30 ч' },
+        }],
+      })
     if (path === '/auth/me') return json(user)
     if (path === '/auth/demo' && method === 'POST')
       return json({ access_token: 'mock-token', token_type: 'bearer', expires_in: 3600, user })

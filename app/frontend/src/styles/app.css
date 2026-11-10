@@ -1866,3 +1866,6 @@ table.data tbody tr.is-clickable {
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+.callout-fix { border-left: 3px solid var(--success, #16a34a); }
+.suggestion-copy { margin-top: 8px; }
