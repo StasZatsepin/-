@@ -33,6 +33,7 @@ const PAGES = [
   { name: 'overview', url: '/app' },
   { name: 'products', url: '/app/products' },
   { name: 'product-new', url: '/app/products/new' },
+  { name: 'product-import', url: '/app/products/import' },
   { name: 'product-card', url: '/app/products/p1' },
   { name: 'product-sources', url: '/app/products/p1', tab: 'Источники' },
   { name: 'product-claims', url: '/app/products/p1', tab: 'Утверждения' },

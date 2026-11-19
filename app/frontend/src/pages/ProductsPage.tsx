@@ -14,6 +14,8 @@ export function ProductsPage() {
   const [error, setError] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('updated')
   const navigate = useNavigate()
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [batch, setBatch] = useState<{ done: number; total: number; failed: string[]; running: boolean } | null>(null)
 
   const load = useCallback(async (query: string) => {
     setError(null)
@@ -44,6 +46,40 @@ export function ProductsPage() {
     return list
   }, [products, sort])
 
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  /** Проверка выбранных товаров по очереди: ошибка одного товара не останавливает остальные. */
+  async function runBatch(ids: string[]) {
+    if (ids.length === 0 || batch?.running) return
+    const failed: string[] = []
+    setBatch({ done: 0, total: ids.length, failed, running: true })
+    for (let index = 0; index < ids.length; index += 1) {
+      try {
+        await api.runAnalysis(ids[index])
+      } catch {
+        failed.push(ids[index])
+      }
+      setBatch({ done: index + 1, total: ids.length, failed: [...failed], running: index + 1 < ids.length })
+    }
+    setSelected(new Set(failed))
+    await load(search)
+  }
+
+  async function handleExport() {
+    try {
+      await api.downloadAuditXlsx()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось выгрузить файл')
+    }
+  }
+
   async function handleDelete(id: string, name: string) {
     if (!window.confirm(`Удалить товар «${name}» вместе с источниками и результатами?`)) {
       return
@@ -68,6 +104,12 @@ export function ProductsPage() {
           </div>
         </div>
         <div className="topbar-actions">
+          <button type="button" className="btn" onClick={() => void handleExport()}>
+            Выгрузить XLSX
+          </button>
+          <Link className="btn" to="/app/products/import">
+            Импорт CSV/XLSX
+          </Link>
           <Link className="btn btn-primary" to="/app/products/new">
             <IconPlus size={16} />
             Создать товар
@@ -151,10 +193,42 @@ export function ProductsPage() {
                 </div>
               </div>
 
+              <div className="batch-bar">
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() =>
+                    setSelected(selected.size === sorted.length ? new Set() : new Set(sorted.map((p) => p.id)))
+                  }
+                >
+                  {selected.size === sorted.length ? 'Снять выбор' : 'Выбрать все'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  disabled={selected.size === 0 || !!batch?.running}
+                  onClick={() => void runBatch([...selected])}
+                >
+                  Проверить выбранные ({selected.size})
+                </button>
+                {batch && (
+                  <>
+                    <div className="batch-progress" role="progressbar" aria-valuemin={0} aria-valuemax={batch.total} aria-valuenow={batch.done}>
+                      <span style={{ width: `${(batch.done / batch.total) * 100}%` }} />
+                    </div>
+                    <span className="small" role="status">
+                      Проверено {batch.done} из {batch.total}
+                      {batch.failed.length > 0 ? `, с ошибкой: ${batch.failed.length} (выбраны для повтора)` : ''}
+                    </span>
+                  </>
+                )}
+              </div>
+
               <div className="table-wrap">
                 <table className="data">
                   <thead>
                     <tr>
+                      <th aria-label="Выбор" />
                       <th>Название</th>
                       <th>Маркетплейс</th>
                       <th>Источники</th>
@@ -170,6 +244,14 @@ export function ProductsPage() {
                         className="is-clickable"
                         onClick={() => navigate(`/app/products/${product.id}`)}
                       >
+                        <td onClick={(event) => event.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selected.has(product.id)}
+                            onChange={() => toggle(product.id)}
+                            aria-label={`Выбрать ${product.name}`}
+                          />
+                        </td>
                         <td>
                           <Link
                             to={`/app/products/${product.id}`}

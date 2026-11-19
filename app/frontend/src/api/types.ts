@@ -277,3 +277,21 @@ export interface ApiErrorBody {
     details: Array<{ field?: string | null; message: string; type?: string }>
   }
 }
+
+export interface ImportProblem {
+  line: number
+  status: 'error' | 'duplicate'
+  messages: string[]
+  name: string
+  sku: string
+}
+
+export interface ImportPreview {
+  headers: string[]
+  sample: string[][]
+  suggested_mapping: Record<string, number | null>
+  mapping: Record<string, number | null>
+  rows_total: number
+  summary: { total: number; ok: number; error: number; duplicate: number } | null
+  problems: ImportProblem[]
+}

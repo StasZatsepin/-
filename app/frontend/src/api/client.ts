@@ -129,6 +129,37 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const api = {
+  importPreview: (file: File, mapping?: Record<string, number | null>) => {
+    const data = new FormData()
+    data.append('file', file)
+    if (mapping) data.append('mapping', JSON.stringify(mapping))
+    return request<import('./types').ImportPreview>('/products/import/preview', { method: 'POST', body: data, isForm: true })
+  },
+  importCommit: (file: File, mapping: Record<string, number | null>, skipInvalid: boolean) => {
+    const data = new FormData()
+    data.append('file', file)
+    data.append('mapping', JSON.stringify(mapping))
+    data.append('skip_invalid', skipInvalid ? 'true' : 'false')
+    return request<{ created: number; skipped: number; product_ids: string[] }>('/products/import/commit', {
+      method: 'POST',
+      body: data,
+      isForm: true,
+    })
+  },
+  downloadAuditXlsx: async () => {
+    const token = getToken()
+    const response = await fetch(`${API_PREFIX}/products/export.xlsx`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) throw new ApiError(response.status, 'EXPORT_FAILED', 'Не удалось сформировать выгрузку.')
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'audit.xlsx'
+    link.click()
+    URL.revokeObjectURL(url)
+  },
   quickCheck: (payload: import('./types').QuickCheckPayload) =>
     request<import('./types').QuickCheckResult>('/public/quick-check', { method: 'POST', body: payload }),
   // --- авторизация ---

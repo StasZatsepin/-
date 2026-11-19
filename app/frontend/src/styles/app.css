@@ -1875,3 +1875,10 @@ table.data tbody tr.is-clickable {
   .empty-lens { animation: lens-move 4s ease-in-out infinite; }
   @keyframes lens-move { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-22px,-10px); } }
 }
+
+.import-mapping { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.import-problems { margin: 0 0 var(--sp-4); padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+.import-skip { display: flex; gap: 8px; align-items: flex-start; margin-bottom: var(--sp-4); }
+.batch-bar { display: flex; gap: var(--sp-3); align-items: center; flex-wrap: wrap; padding: 0 var(--sp-6); margin-top: var(--sp-4); }
+.batch-progress { flex: 1; min-width: 180px; height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.batch-progress > span { display: block; height: 100%; background: var(--primary, #4f46e5); transition: width 0.2s; }

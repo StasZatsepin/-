@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { ProductFormPage } from './pages/ProductFormPage'
 import { ProductPage } from './pages/ProductPage'
+import { ImportPage } from './pages/ImportPage'
 import { ProductsPage } from './pages/ProductsPage'
 import { ReportPage } from './pages/ReportPage'
 import { SettingsPage } from './pages/SettingsPage'
@@ -45,6 +46,7 @@ export function App() {
       >
         <Route path="/app" element={<OverviewPage />} />
         <Route path="/app/products" element={<ProductsPage />} />
+        <Route path="/app/products/import" element={<ImportPage />} />
         <Route path="/app/products/new" element={<ProductFormPage />} />
         <Route path="/app/products/:productId" element={<ProductPage />} />
         <Route path="/app/products/:productId/edit" element={<ProductFormPage />} />
