@@ -1,0 +1,414 @@
+{
+ "version": 1,
+ "synthetic": true,
+ "cards": [
+  {
+   "id": "n01",
+   "description": "Беспроводные наушники. Время работы без подзарядки — до 48 часов.",
+   "attributes_text": "Время работы: 30 ч",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n02",
+   "description": "Портативная колонка. Вес всего 500 г, легко носить с собой.",
+   "attributes_text": "Вес: 800 г",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n03",
+   "description": "Термос из нержавеющей стали. Объём 1 литр.",
+   "attributes_text": "Объём: 750 мл",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n04",
+   "description": "Электрочайник мощностью 2200 Вт, быстро закипает.",
+   "attributes_text": "Мощность: 1800 Вт",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n05",
+   "description": "Пауэрбанк ёмкостью 20000 мАч для длительных поездок.",
+   "attributes_text": "Ёмкость: 10000 мАч",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n06",
+   "description": "Умные часы. Автономность до 14 дней без подзарядки.",
+   "attributes_text": "Время работы: 7 дней",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n07",
+   "description": "Рюкзак. Вес изделия 0,6 кг.",
+   "attributes_text": "Масса: 1,1 кг",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": "запятая в числе, разные единицы записи"
+  },
+  {
+   "id": "n08",
+   "description": "Гарантия производителя 24 месяца.",
+   "attributes_text": "Гарантия: 12 месяцев",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "n09",
+   "description": "Монитор с диагональю 27 дюймов.",
+   "attributes_text": "Диагональ: 24 дюйма",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": "единица может не распознаваться"
+  },
+  {
+   "id": "n10",
+   "description": "Лампа настольная, высота 45 см.",
+   "attributes_text": "Высота: 35 см",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "numeric"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a01",
+   "description": "Идеально подходит для поездок и ежедневного использования.",
+   "attributes_text": "Вес: 250 г",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a02",
+   "description": "Невероятно мощный пылесос с лучшим качеством уборки.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a03",
+   "description": "Супербыстрая зарядка и максимальная производительность.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a04",
+   "description": "Универсальный держатель, подойдёт абсолютно всем.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a05",
+   "description": "Премиальное качество по доступной цене. Топовый выбор.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "a06",
+   "description": "Лучший в своём классе кофе-аппарат, идеальный вкус каждый раз.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u01",
+   "description": "Детский стульчик. Полностью безопасен для детей любого возраста.",
+   "attributes_text": "Материал: пластик",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u02",
+   "description": "Крем гипоаллергенный, прошёл дерматологические тесты.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u03",
+   "description": "Матрас сертифицирован по международным стандартам качества.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u04",
+   "description": "Экологически чистый материал, безвреден для здоровья.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u05",
+   "description": "Оригинальный товар, официальная гарантия производителя.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "u06",
+   "description": "Влагозащищённый корпус, выдерживает погружение в воду.",
+   "attributes_text": "",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "r01",
+   "description": "Беспроводные наушники. Время работы до 48 часов.",
+   "attributes_text": "Время работы: 48 ч",
+   "document_text": "",
+   "reviews_text": "Держат около 20 часов, не 48\nЗвук хороший\nДо 48 часов не доживают, максимум 22",
+   "expected": [
+    "review"
+   ],
+   "note": ""
+  },
+  {
+   "id": "r02",
+   "description": "Пауэрбанк ёмкостью 20000 мАч.",
+   "attributes_text": "Ёмкость: 20000 мАч",
+   "document_text": "",
+   "reviews_text": "Реальная ёмкость около 12000 мАч\nЗаряжает телефон 3 раза",
+   "expected": [
+    "review"
+   ],
+   "note": ""
+  },
+  {
+   "id": "r03",
+   "description": "Чайник объёмом 2 литра.",
+   "attributes_text": "Объём: 2 л",
+   "document_text": "",
+   "reviews_text": "Влезает только 1,5 литра\nКрасивый",
+   "expected": [
+    "review"
+   ],
+   "note": ""
+  },
+  {
+   "id": "c01",
+   "description": "Беспроводные наушники. Время работы до 30 часов.",
+   "attributes_text": "Время работы: 30 ч",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c02",
+   "description": "Колонка весом 2 кг.",
+   "attributes_text": "Вес: 2000 г",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": "одно значение в разных единицах"
+  },
+  {
+   "id": "c03",
+   "description": "Чайник мощностью 2200 Вт, объём 1,7 л.",
+   "attributes_text": "Мощность: 2200 Вт\nОбъём: 1,7 л",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c04",
+   "description": "Рюкзак из полиэстера, вес 0,6 кг, высота 45 см.",
+   "attributes_text": "Масса: 0,6 кг\nВысота: 45 см\nМатериал: полиэстер",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c05",
+   "description": "Термос 750 мл. Колба из нержавеющей стали.",
+   "attributes_text": "Объём: 750 мл\nМатериал колбы: нержавеющая сталь",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c06",
+   "description": "Монитор, диагональ 27 дюймов, разрешение 2560x1440.",
+   "attributes_text": "Диагональ: 27 дюймов",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c07",
+   "description": "Матрас сертифицирован по ГОСТ 19917.",
+   "attributes_text": "Материал: пенополиуретан",
+   "document_text": "Сертификат соответствия на матрасы. Стандарт ГОСТ 19917. Выдан на модель Comfort.",
+   "reviews_text": "",
+   "expected": [],
+   "note": "утверждение подтверждено документом"
+  },
+  {
+   "id": "c08",
+   "description": "Крем с гиалуроновой кислотой, объём 50 мл.",
+   "attributes_text": "Объём: 50 мл",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c09",
+   "description": "Наушники, время работы 30 часов.",
+   "attributes_text": "Время работы: 30 ч",
+   "document_text": "",
+   "reviews_text": "Работают около 29 часов, всё честно\nЗвук отличный",
+   "expected": [],
+   "note": "отзыв совпадает с обещанием"
+  },
+  {
+   "id": "c10",
+   "description": "Лампа настольная, высота 45 см, мощность 10 Вт.",
+   "attributes_text": "Высота: 45 см\nМощность: 10 Вт",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c11",
+   "description": "Пауэрбанк на 10000 мАч, два порта USB.",
+   "attributes_text": "Ёмкость: 10000 мАч",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "c12",
+   "description": "Кружка керамическая, объём 350 мл.",
+   "attributes_text": "Объём: 350 мл\nМатериал: керамика",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [],
+   "note": ""
+  },
+  {
+   "id": "m01",
+   "description": "Идеальные наушники! Время работы до 48 часов. Полностью безопасны для детей.",
+   "attributes_text": "Время работы: 30 ч",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous",
+    "numeric",
+    "unconfirmed"
+   ],
+   "note": ""
+  },
+  {
+   "id": "m02",
+   "description": "Лучшая колонка, вес 500 г.",
+   "attributes_text": "Вес: 900 г",
+   "document_text": "",
+   "reviews_text": "",
+   "expected": [
+    "ambiguous",
+    "numeric"
+   ],
+   "note": ""
+  }
+ ]
+}
