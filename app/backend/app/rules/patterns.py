@@ -94,6 +94,10 @@ CLAIM_KEYWORDS: Dict[ClaimType, Tuple[str, ...]] = {
         "инструкци",
         "охрана труда",
         "питание",
+        "влагозащ",
+        "водонепроницаем",
+        "водостойк",
+        "защита от воды",
     ),
     ClaimType.WARRANTY_OR_SERVICE: (
         "гаранти",
@@ -109,6 +113,10 @@ CLAIM_KEYWORDS: Dict[ClaimType, Tuple[str, ...]] = {
     ),
     ClaimType.SAFETY_OR_HEALTH: (
         "безопаст",
+        "безопасн",
+        "безопасен",
+        "безопасны",
+        "безвред",
         "нет побочн",
         "не вредит",
         "гипоаллерген",
@@ -171,6 +179,20 @@ AMBIGUOUS_MARKERS: Tuple[str, ...] = (
     "единственный",
     "никаких",
     "не имеет значения",
+)
+
+# Основы слов: срабатывают на любые окончания («лучшим», «идеальные», «безопасен»).
+AMBIGUOUS_STEMS: Tuple[str, ...] = (
+    "лучш",
+    "идеальн",
+    "невероятн",
+    "супер",
+    "абсолютно",
+    "топов",
+    "премиальн",
+    "безупречн",
+    "полностью безопас",
+    "полностью безвредн",
 )
 
 # Фразы, где «ярлык недобросовестности» был бы недопустим.
@@ -265,7 +287,11 @@ def _compile_markers(markers) -> tuple:
     return tuple(_compile_marker(marker) for marker in markers)
 
 
-_AMBIGUOUS_PATTERNS = _compile_markers(AMBIGUOUS_MARKERS)
+def _compile_stem(stem: str) -> "re.Pattern[str]":
+    return re.compile(rf"(?<![А-Яа-яЁёA-Za-z0-9]){re.escape(stem)}[А-Яа-яЁё]*", re.IGNORECASE)
+
+
+_AMBIGUOUS_PATTERNS = _compile_markers(AMBIGUOUS_MARKERS) + tuple(_compile_stem(s) for s in AMBIGUOUS_STEMS)
 _PROHIBITED_PATTERNS = _compile_markers(PROHIBITED_LABELS)
 _REVIEW_NEGATIVE_PATTERNS = _compile_markers(REVIEW_NEGATIVE_MARKERS)
 _REVIEW_POSITIVE_PATTERNS = _compile_markers(REVIEW_POSITIVE_MARKERS)

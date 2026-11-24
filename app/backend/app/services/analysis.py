@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -150,6 +151,15 @@ def _apply_provider_suggestions(claims: List[Claim], suggestions) -> int:
     return applied
 
 
+_STANDARD_ID = re.compile(
+    r"(?<![а-яёa-z])(?:гост|тр\s*тс|iso|ту|din|en)\s*[р]?\s*[\d][\d\-.:/]*", re.IGNORECASE
+)
+
+
+def _normalize_ids(text: str) -> str:
+    return re.sub(r"[\s\-]+", "", (text or "").lower().replace("ё", "е")).rstrip(".:/")
+
+
 def _build_comparables(claims: List[Claim], sources: List[Source]) -> List[ComparableClaim]:
     source_by_id = {source.id: source for source in sources}
     comparables: List[ComparableClaim] = []
@@ -250,6 +260,19 @@ def _build_evidence(
             continue
         matched = match_attribute(comparable.statement, comparable.text, quantities)
         if matched is None:
+            # Слова о параметре в тексте нет, но число с единицей точно совпало со значением
+            # в таблице: считаем утверждение подтверждённым таблицей (расхождения так не ищем).
+            for quantity in quantities:
+                if quantity.dimension != comparable.statement.dimension:
+                    continue
+                converted = convert(
+                    comparable.statement.value, comparable.statement.unit_key, quantity.unit_key
+                )
+                if converted is not None and abs(converted - quantity.value) <= max(
+                    abs(quantity.value) * 0.03, 0.01
+                ):
+                    supported.add(comparable.claim_id)
+                    break
             continue
         quantity, _score = matched
         converted = convert(
@@ -278,6 +301,23 @@ def _build_evidence(
         db.add(evidence)
         db.flush()
         evidence_ids.setdefault(comparable.claim_id, []).append(evidence.id)
+
+    # Утверждение со ссылкой на стандарт («ГОСТ 19917») подтверждается документом,
+    # в котором назван тот же стандарт. Совпадение только по идентификатору: смысл
+    # документа система не оценивает, поэтому проверка человеком остаётся.
+    document_text = " ".join(
+        (source.text_content or "")
+        for source in sources
+        if source.source_type == SourceType.TECHNICAL_DOCUMENT.value
+    )
+    if document_text:
+        normalized_document = _normalize_ids(document_text)
+        for claim in claims:
+            if claim.is_rejected or claim.id in supported:
+                continue
+            identifiers = _STANDARD_ID.findall(claim.text or "")
+            if identifiers and all(_normalize_ids(item) in normalized_document for item in identifiers):
+                supported.add(claim.id)
 
     return evidence_ids, supported | contradicted
 

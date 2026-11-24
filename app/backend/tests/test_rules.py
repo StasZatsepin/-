@@ -242,3 +242,42 @@ class TestTextAttributeValues:
         assert parse_attribute("Время работы", "30-40 ч") is None
         assert parse_attribute("Материал корпуса", "алюминий") is None
         assert parse_attribute("model", "TEST-1") is None
+
+
+class TestRussianWordFormsAndSynonyms:
+    """Сопоставление утверждения с характеристикой: падежи, «ё», синонимы."""
+
+    @staticmethod
+    def _match(sentence, key, value):
+        from app.rules.engine import match_attribute
+        from app.rules.numeric import extract_numeric_statements
+
+        quantities, _ = parse_attributes({key: value})
+        statement = extract_numeric_statements(sentence)[0]
+        return match_attribute(statement, sentence, quantities)
+
+    def test_case_endings_and_yo(self):
+        assert self._match("Пауэрбанк ёмкостью 20000 мАч.", "Ёмкость", "10000 мАч")
+        assert self._match("Объём 1 литр.", "Объём", "750 мл")
+
+    def test_synonyms_weight_and_autonomy(self):
+        assert self._match("Вес изделия 0,6 кг.", "Масса", "1,1 кг")
+        assert self._match("Автономность до 14 дней без подзарядки.", "Время работы", "7 дней")
+
+    def test_charging_time_is_not_compared_with_runtime(self):
+        assert self._match("Зарядка занимает 2 часа.", "Время работы", "30 ч") is None
+
+
+class TestAmbiguousStems:
+    def test_endings_are_covered(self):
+        from app.rules.patterns import find_ambiguous_marker
+
+        assert find_ambiguous_marker("Невероятно мощный пылесос с лучшим качеством.")
+        assert find_ambiguous_marker("Полностью безопасен для детей.")
+        assert find_ambiguous_marker("Подойдёт абсолютно всем.")
+
+    def test_plain_specification_is_not_ambiguous(self):
+        from app.rules.patterns import find_ambiguous_marker
+
+        assert find_ambiguous_marker("Максимальная нагрузка 100 кг, вес 2 кг.") is None
+        assert find_ambiguous_marker("Корпус из алюминия, высота 45 см.") is None

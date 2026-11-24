@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -66,6 +67,15 @@ ATTRIBUTE_KEY_HINTS: Dict[str, Tuple[str, ...]] = {
     "power": ("мощност",),
     "voltage": ("напряжен",),
     "capacity": ("ёмк", "емк", "аккумулятор"),
+    # Русские ключи: синонимы, которыми продавцы называют тот же параметр.
+    "масса": ("вес", "масс"),
+    "вес": ("вес", "масс"),
+    "работы": ("работ", "автоном", "батаре"),
+    "автономной": ("автоном", "работ"),
+    "емкость": ("емк", "аккумулятор"),
+    "объем": ("объем", "литр"),
+    "мощность": ("мощност", "ватт"),
+    "гарантия": ("гарант", "срок"),
     "storage": ("памят",),
     "noise": ("шум",),
     "temperature": ("температур",),
@@ -167,6 +177,17 @@ def _specific_hint_words(quantity: AttributeQuantity) -> List[str]:
     return words
 
 
+def _hint_in(haystack: str, word: str) -> bool:
+    """Ищет маркер характеристики с учётом падежных окончаний и буквы «ё».
+
+    «емкость» находится в «ёмкостью», «объем» — в «объёмом»; слева граница слова,
+    чтобы короткие маркеры не срабатывали внутри чужих слов.
+    """
+    word = word.lower().replace("ё", "е")
+    stem = word[: max(4, len(word) - 2)] if len(word) >= 6 else word
+    return re.search(r"(?<![а-яa-z0-9])" + re.escape(stem), haystack) is not None
+
+
 def match_attribute(
     statement: NumericStatement, claim_text: str, quantities: Sequence[AttributeQuantity]
 ) -> Optional[Tuple[AttributeQuantity, float]]:
@@ -180,12 +201,12 @@ def match_attribute(
     candidates = [q for q in quantities if q.dimension == statement.dimension]
     if not candidates:
         return None
-    haystack = (statement.context or claim_text or "").lower()
+    haystack = (statement.context or claim_text or "").lower().replace("ё", "е")
     best: Optional[Tuple[AttributeQuantity, float]] = None
     for quantity in candidates:
         score = 0.0
         for word in _specific_hint_words(quantity):
-            if word and word in haystack:
+            if word and _hint_in(haystack, word):
                 score += 2.0 if len(word) > 4 else 1.0
         if score <= 0:
             continue
@@ -562,6 +583,10 @@ def build_missing_evidence_findings(
 
         if claim_type not in VERIFIABLE_CLAIM_TYPES:
             continue
+        # Размытое обещание уже получило отдельную находку: второе замечание
+        # «нет подтверждения» к той же фразе только добавляет шума.
+        if is_ambiguous_claim(claim.text or ""):
+            continue
 
         findings.append(
             FindingDraft(
@@ -595,6 +620,16 @@ def build_missing_evidence_findings(
             )
         )
     return findings
+
+
+def _shares_parameter_word(review_text: str, comparable: ComparableClaim) -> bool:
+    """Есть ли в отзыве и в утверждении общее содержательное слово (кроме единиц и числа)."""
+    def words(text: str) -> set:
+        found = re.findall(r"[а-яё]{5,}", (text or "").lower().replace("ё", "е"))
+        return {w[:5] for w in found}
+
+    units = {"часов", "минут", "месяц", "литра", "литро", "грамм", "килог", "милли"}
+    return bool((words(review_text) & words(comparable.text)) - units)
 
 
 def build_review_signal_findings(
@@ -689,7 +724,9 @@ def build_review_signal_findings(
     # Числовые расхождения, упомянутые в негативном или смешанном отзыве
     for claim in review_claims:
         sentiment = review_sentiment(claim.text)
-        if sentiment not in {"negative", "mixed"}:
+        # Явно положительный отзыв не считается сигналом. Нейтральный отзыв с другим
+        # числом тоже показывается: покупатели часто называют цифру без оценочных слов.
+        if sentiment == "positive":
             continue
         statement = getattr(claim, "numeric_dimension", None)
         if not statement:
@@ -706,6 +743,22 @@ def build_review_signal_findings(
                 continue
             if not values_differ(converted, comparable.statement.value):
                 continue
+            # Число в отзыве должно быть правдоподобной оценкой того же параметра:
+            # «зарядка 2 часа» не сравнивается с «работа 48 часов».
+            reference = comparable.statement.value
+            if reference <= 0 or not (0.25 <= converted / reference <= 4.0):
+                continue
+            if sentiment == "unclear" and not _shares_parameter_word(claim.text, comparable):
+                # Без оценочных слов и без общего слова о параметре связь слишком слабая,
+                # кроме случая, когда в описании единственное значение этого измерения.
+                same_dimension = [
+                    c
+                    for c in comparables
+                    if c.statement.dimension == comparable.statement.dimension
+                    and c.source_type != SourceType.REVIEW_EXPORT.value
+                ]
+                if len(same_dimension) != 1:
+                    continue
             findings.append(
                 FindingDraft(
                     finding_type=FindingType.REVIEW_SIGNAL.value,
