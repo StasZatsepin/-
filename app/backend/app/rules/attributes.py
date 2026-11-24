@@ -133,6 +133,23 @@ def _unit_from_hint(key: str) -> Optional[Unit]:
     return None
 
 
+_TEXT_VALUE = re.compile(r"^\s*(\d+(?:[.,]\d+)?)\s*([^\d\s][^\d]*?)?\s*$")
+
+
+def _parse_text_value(value: str) -> Optional[Tuple[float, Optional[Unit]]]:
+    """Разбирает строку вида «30 ч» или «250». Диапазоны и составные значения не сравниваются."""
+    match = _TEXT_VALUE.match(value or "")
+    if not match:
+        return None
+    number = float(match.group(1).replace(",", "."))
+    unit_text = (match.group(2) or "").strip().rstrip(".").lower()
+    unit = find_unit(unit_text) if unit_text else None
+    if unit_text and unit is None:
+        # Единица в значении не распознана: не гадаем, берём единицу из ключа.
+        return number, None
+    return number, unit
+
+
 def parse_attribute(key: str, value: Any) -> Optional[AttributeQuantity]:
     """Превращает пару «ключ — значение» в нормализованную величину.
 
@@ -146,13 +163,20 @@ def parse_attribute(key: str, value: Any) -> Optional[AttributeQuantity]:
         return None
     if isinstance(value, bool):
         return None
-    if not isinstance(value, (int, float)):
+    value_unit: Optional[Unit] = None
+    if isinstance(value, str):
+        parsed = _parse_text_value(value)
+        if parsed is None:
+            return None
+        numeric, value_unit = parsed
+    elif isinstance(value, (int, float)):
+        numeric = float(value)
+    else:
         return None
-    numeric = float(value)
     if numeric <= 0:
         return None
 
-    unit = _unit_from_key_suffix(normalized) or _unit_from_hint(normalized)
+    unit = value_unit or _unit_from_key_suffix(normalized) or _unit_from_hint(normalized)
     if unit is None:
         return None
 

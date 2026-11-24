@@ -210,7 +210,8 @@ class TestRussianAttributes:
         assert q.unit_key == "month"
 
     def test_russian_non_numeric_skipped(self):
-        assert parse_attribute("время работы", "48 часов") is None
+        # Строка «число + единица» теперь разбирается (форма и CSV передают значения строками).
+        assert parse_attribute("время работы", "48 часов").value == 48.0
         assert parse_attribute("масса", "пластик") is None
 
     def test_russian_unknown_attribute_skipped(self):
@@ -226,3 +227,18 @@ class TestRussianAttributes:
         })
         assert len(parsed) == 3
         assert set(skipped) == {"цвет"}
+
+
+class TestTextAttributeValues:
+    def test_string_value_with_unit_is_parsed(self):
+        quantity = parse_attribute("Время работы", "30 ч")
+        assert quantity is not None and quantity.value == 30.0 and quantity.dimension == "time"
+
+    def test_decimal_comma_and_bare_number_use_key_unit(self):
+        assert parse_attribute("weight_g", "250").value == 250.0
+        assert parse_attribute("Масса", "1,5 кг").value == 1.5
+
+    def test_ranges_and_words_are_not_compared(self):
+        assert parse_attribute("Время работы", "30-40 ч") is None
+        assert parse_attribute("Материал корпуса", "алюминий") is None
+        assert parse_attribute("model", "TEST-1") is None
